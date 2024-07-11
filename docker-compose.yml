@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+  
+  metadata-pre-processor:
+    env_file:
+      - dev.env
+    image: pennsieve/metadata-pre-processor
+    volumes:
+      - ./data:/service/data
+    container_name: metadata-pre-processor
+    build:
+      context: .
+      dockerfile: ./Dockerfile_arm64 # change to Dockerfile on Linux
+    entrypoint: /service/main

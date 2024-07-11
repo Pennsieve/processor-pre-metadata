@@ -1,0 +1,32 @@
+[
+  {
+    "conceptTitle": true,
+    "createdAt": "2024-06-13T19:28:34.077000+00:00",
+    "dataType": "String",
+    "default": false,
+    "defaultValue": null,
+    "description": "",
+    "displayName": "Name",
+    "id": "c030dd68-6ba3-4182-a847-88abebff0963",
+    "index": 0,
+    "locked": false,
+    "name": "name",
+    "required": true,
+    "updatedAt": "2024-06-13T20:14:28.958000+00:00"
+  },
+  {
+    "conceptTitle": false,
+    "createdAt": "2024-06-13T19:28:34.077000+00:00",
+    "dataType": "Long",
+    "default": false,
+    "defaultValue": null,
+    "description": "",
+    "displayName": "ID",
+    "id": "857718c0-34ed-47eb-9360-b54715211c3a",
+    "index": 1,
+    "locked": false,
+    "name": "id",
+    "required": false,
+    "updatedAt": "2024-06-13T20:14:28.958000+00:00"
+  }
+]
