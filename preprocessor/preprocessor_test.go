@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -22,7 +23,7 @@ func TestRun(t *testing.T) {
 	integrationID := uuid.NewString()
 	baseDir := t.TempDir()
 	sessionToken := uuid.NewString()
-	expectedFiles := NewExpectedFiles(datasetId).WithPropFiles(
+	expectedFiles := NewExpectedFiles(datasetId).WithModels(
 		"7931cbe6-7494-4c0b-95f0-9f4b34edc73b",
 		"83964537-46d2-4fb5-9408-0b6262a42a56",
 		"bb04a8ce-03c9-4801-a0d9-e35cea53ac1b",
@@ -30,7 +31,7 @@ func TestRun(t *testing.T) {
 	mockServer := newMockServer(t, integrationID, datasetId, expectedFiles)
 	defer mockServer.Close()
 
-	metadataPP := NewMetadataPreProcessor(integrationID, baseDir, sessionToken, mockServer.URL, mockServer.URL)
+	metadataPP := NewMetadataPreProcessor(integrationID, baseDir, sessionToken, mockServer.URL, mockServer.URL, defaultRecordsBatchSize)
 
 	currentUser, err := user.Current()
 	require.NoError(t, err)
@@ -50,13 +51,18 @@ type ExpectedFile struct {
 	// TestdataPath is the path relative to the testdata directory
 	TestdataPath string
 	Bytes        []byte
+	Content      any
 	// APIPath is the request path the mock server will match against.
-	APIPath string
+	APIPath     string
+	QueryParams url.Values
 }
 
 func (e ExpectedFile) HandlerFunc(t *testing.T) func(http.ResponseWriter, *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		require.Equal(t, http.MethodGet, request.Method, "expected method %s for %s, got %s", http.MethodGet, request.URL, request.Method)
+		if e.QueryParams != nil {
+			require.Equal(t, e.QueryParams, request.URL.Query(), "expected query %s for %s, got %s", e.QueryParams, request.URL, request.URL.Query())
+		}
 		_, err := writer.Write(e.Bytes)
 		require.NoError(t, err)
 	}
@@ -74,11 +80,15 @@ func NewExpectedFiles(datasetID string) *ExpectedFiles {
 	}
 }
 
-func (e *ExpectedFiles) WithPropFiles(modelIDs ...string) *ExpectedFiles {
+func (e *ExpectedFiles) WithModels(modelIDs ...string) *ExpectedFiles {
 	for _, modelID := range modelIDs {
 		e.Files = append(e.Files, ExpectedFile{
 			TestdataPath: propertiesFileName(modelID),
 			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/properties", e.DatasetID, modelID),
+		}, ExpectedFile{
+			TestdataPath: recordsFileName(modelID),
+			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/instances", e.DatasetID, modelID),
+			QueryParams:  map[string][]string{"limit": {strconv.Itoa(defaultRecordsBatchSize)}, "offset": {strconv.Itoa(0)}},
 		})
 	}
 	return e
@@ -91,6 +101,7 @@ func (e *ExpectedFiles) Build(t *testing.T) *ExpectedFiles {
 		bytes, err := os.ReadFile(file)
 		require.NoError(t, err)
 		expected.Bytes = bytes
+		require.NoError(t, json.Unmarshal(bytes, &expected.Content))
 	}
 	return e
 }
@@ -101,7 +112,9 @@ func (e *ExpectedFiles) AssertEqual(t *testing.T, actualDir string) {
 		actualFilePath := filepath.Join(actualDir, base)
 		actualBytes, err := os.ReadFile(actualFilePath)
 		if assert.NoError(t, err) {
-			assert.Equal(t, expectedFile.Bytes, actualBytes, "actual %s does not match expected %s", actualFilePath, expectedFile.TestdataPath)
+			var actualContent any
+			require.NoError(t, json.Unmarshal(actualBytes, &actualContent))
+			assert.Equal(t, expectedFile.Content, actualContent, "actual content %s does not match expected content %s", actualFilePath, expectedFile.TestdataPath)
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package models
 
+import "log/slog"
+
 const ModelType = "concept"
 
 // *Key must match the json struct tag for the property
@@ -26,4 +28,10 @@ func ModelFromMap(jsonMap map[string]any) *Model {
 		Name:        jsonMap[NameKey].(string),
 		DisplayName: jsonMap[DisplayNameKey].(string),
 	}
+}
+
+func (m *Model) Logger(logger *slog.Logger) *slog.Logger {
+	return logger.With(slog.Group("model",
+		slog.String("id", m.ID),
+		slog.String("name", m.Name)))
 }
