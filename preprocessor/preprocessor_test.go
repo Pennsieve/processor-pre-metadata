@@ -11,7 +11,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -21,7 +20,8 @@ func TestRun(t *testing.T) {
 	datasetId := uuid.NewString()
 
 	integrationID := uuid.NewString()
-	baseDir := t.TempDir()
+	inputDir := t.TempDir()
+	outputDir := t.TempDir()
 	sessionToken := uuid.NewString()
 	expectedFiles := NewExpectedFiles(datasetId).WithModels(
 		"7931cbe6-7494-4c0b-95f0-9f4b34edc73b",
@@ -31,18 +31,9 @@ func TestRun(t *testing.T) {
 	mockServer := newMockServer(t, integrationID, datasetId, expectedFiles)
 	defer mockServer.Close()
 
-	metadataPP := NewMetadataPreProcessor(integrationID, baseDir, sessionToken, mockServer.URL, mockServer.URL, defaultRecordsBatchSize)
+	metadataPP := NewMetadataPreProcessor(integrationID, inputDir, outputDir, sessionToken, mockServer.URL, mockServer.URL, defaultRecordsBatchSize)
 
-	currentUser, err := user.Current()
-	require.NoError(t, err)
-	uid, err := strconv.Atoi(currentUser.Uid)
-	require.NoError(t, err)
-	gid, err := strconv.Atoi(currentUser.Gid)
-	require.NoError(t, err)
-
-	require.NoError(t, metadataPP.Run(uid, gid))
-	assert.DirExists(t, metadataPP.InputDirectory())
-	assert.DirExists(t, metadataPP.OutputDirectory())
+	require.NoError(t, metadataPP.Run())
 	expectedFiles.AssertEqual(t, metadataPP.MetadataDirectory())
 
 }

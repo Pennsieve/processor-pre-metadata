@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/pennsieve/processor-pre-metadata/logging"
 	"github.com/pennsieve/processor-pre-metadata/models"
 	"github.com/pennsieve/processor-pre-metadata/pennsieve"
@@ -23,13 +22,15 @@ const defaultRecordsBatchSize = 1000
 
 type MetadataPreProcessor struct {
 	IntegrationID    string
-	BaseDirectory    string
+	InputDirectory   string
+	OutputDirectory  string
 	Pennsieve        *pennsieve.Session
 	RecordsBatchSize int
 }
 
 func NewMetadataPreProcessor(integrationID string,
-	baseDirectory string,
+	inputDirectory string,
+	outputDirectory string,
 	sessionToken string,
 	apiHost string,
 	api2Host string,
@@ -40,44 +41,43 @@ func NewMetadataPreProcessor(integrationID string,
 	}
 	return &MetadataPreProcessor{
 		IntegrationID:    integrationID,
-		BaseDirectory:    baseDirectory,
+		InputDirectory:   inputDirectory,
+		OutputDirectory:  outputDirectory,
 		Pennsieve:        pennsieve.NewSession(sessionToken, apiHost, api2Host),
 		RecordsBatchSize: recordsBatch,
 	}
 }
 
-func FromEnv() *MetadataPreProcessor {
-	integrationID := os.Getenv("INTEGRATION_ID")
-	baseDir := os.Getenv("BASE_DIR")
-	if integrationID == "" {
-		id := uuid.New()
-		integrationID = id.String()
+func FromEnv() (*MetadataPreProcessor, error) {
+	integrationID, err := LookupRequiredEnvVar("INTEGRATION_ID")
+	if err != nil {
+		return nil, err
 	}
-	if baseDir == "" {
-		baseDir = "/mnt/efs"
+
+	inputDirectory, err := LookupRequiredEnvVar("INPUT_DIR")
+	if err != nil {
+		return nil, err
 	}
-	sessionToken := os.Getenv("SESSION_TOKEN")
-	apiHost := os.Getenv("PENNSIEVE_API_HOST")
-	api2Host := os.Getenv("PENNSIEVE_API_HOST2")
-	return NewMetadataPreProcessor(integrationID, baseDir, sessionToken, apiHost, api2Host, 0)
+	outputDirectory, err := LookupRequiredEnvVar("OUTPUT_DIR")
+	if err != nil {
+		return nil, err
+	}
+	sessionToken, err := LookupRequiredEnvVar("SESSION_TOKEN")
+	if err != nil {
+		return nil, err
+	}
+	apiHost, err := LookupRequiredEnvVar("PENNSIEVE_API_HOST")
+	if err != nil {
+		return nil, err
+	}
+	api2Host, err := LookupRequiredEnvVar("PENNSIEVE_API_HOST2")
+	if err != nil {
+		return nil, err
+	}
+	return NewMetadataPreProcessor(integrationID, inputDirectory, outputDirectory, sessionToken, apiHost, api2Host, 0), nil
 }
 
-func (m *MetadataPreProcessor) Run(uid int, gid int) error {
-	// create subdirectories
-	// inputDir
-	inputDir, err := m.MkInputDirectory()
-	if err != nil {
-		return err
-	}
-	logger.Info("created input directory", slog.String("path", inputDir))
-
-	// outputDir
-	outputDir, err := m.MkOutputDirectory(uid, gid)
-	if err != nil {
-		return err
-	}
-	logger.Info("created output directory", slog.String("path", outputDir))
-
+func (m *MetadataPreProcessor) Run() error {
 	// get integration info
 	integration, err := m.Pennsieve.GetIntegration(m.IntegrationID)
 	if err != nil {
@@ -103,48 +103,8 @@ func (m *MetadataPreProcessor) Run(uid int, gid int) error {
 	return nil
 }
 
-func (m *MetadataPreProcessor) InputDirectory() string {
-	return filepath.Join(m.BaseDirectory, "input", m.IntegrationID)
-}
-
-func (m *MetadataPreProcessor) MkInputDirectory() (string, error) {
-	inputDir := m.InputDirectory()
-	err := os.MkdirAll(inputDir, 0755)
-	if err != nil {
-		return "", fmt.Errorf("error creating input directory %s: %w", inputDir, err)
-	}
-	return inputDir, nil
-}
-
-func (m *MetadataPreProcessor) BaseOutputDirectory() string {
-	return filepath.Join(m.BaseDirectory, "output")
-}
-
-func (m *MetadataPreProcessor) OutputDirectory() string {
-	return filepath.Join(m.BaseOutputDirectory(), m.IntegrationID)
-}
-
 func (m *MetadataPreProcessor) MetadataDirectory() string {
-	return filepath.Join(m.InputDirectory(), "metadata")
-}
-
-func (m *MetadataPreProcessor) MkOutputDirectory(uid, gid int) (string, error) {
-	baseOutputDir := m.BaseOutputDirectory()
-	outputDir := m.OutputDirectory()
-	err := os.MkdirAll(outputDir, 0777)
-	if err != nil {
-		return "", fmt.Errorf("error creating output directory %s: %w", outputDir, err)
-	}
-	err = filepath.WalkDir(baseOutputDir, func(name string, info os.DirEntry, err error) error {
-		if err == nil {
-			err = os.Chown(name, uid, gid)
-		}
-		return err
-	})
-	if err != nil {
-		return "", fmt.Errorf("error changing owner of output directory %s: %w", outputDir, err)
-	}
-	return outputDir, err
+	return filepath.Join(m.InputDirectory, "metadata")
 }
 
 func propertiesFileName(modelID string) string {
@@ -241,4 +201,12 @@ func WriteJSON(filePath string, v any) (int64, error) {
 		return 0, fmt.Errorf("error writing JSON value to file %s: %w", filePath, err)
 	}
 	return written, nil
+}
+
+func LookupRequiredEnvVar(key string) (string, error) {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return "", fmt.Errorf("no %s set", key)
+	}
+	return value, nil
 }
