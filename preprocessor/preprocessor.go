@@ -84,9 +84,6 @@ func (m *MetadataPreProcessor) Run() error {
 		return err
 	}
 	datasetID := integration.DatasetNodeID
-	if datasetID == "" {
-		datasetID = "N:dataset:e323328c-13c3-44f3-aaff-4fd5a941ded5"
-	}
 	logger.Info("got integration", slog.String("datasetID", datasetID))
 
 	metadataDirectory := m.MetadataDirectory()
@@ -107,6 +104,7 @@ func (m *MetadataPreProcessor) MetadataDirectory() string {
 	return filepath.Join(m.InputDirectory, "metadata")
 }
 
+// propertiesFileName the name of the properties file for the given model relative to the metadata directory
 func propertiesFileName(modelID string) string {
 	return fmt.Sprintf("%s-properties.json", modelID)
 }
@@ -147,6 +145,7 @@ func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datase
 	return graphModels, nil
 }
 
+// recordsFileName the name of the records file for the given model relative to the metadata directory
 func recordsFileName(modelID string) string {
 	return fmt.Sprintf("%s-records.json", modelID)
 }

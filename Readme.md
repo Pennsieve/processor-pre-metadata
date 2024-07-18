@@ -16,7 +16,9 @@ To run tests:
 
 To run integration test:
 
-1. Copy `dev.env.example` to `dev.env`
-2. In `dev.env` update `SESSION_TOKEN` with a valid token
-3. Run `./run-integration-test.sh dev.env`
+1. Given a dataset you want to test with, create an integration for the dataset and this pre-processor. Get the
+   integration id
+2. Copy `dev.env.example` to `dev.env`
+3. In `dev.env` update `SESSION_TOKEN` with a valid token and `INTEGRATION_ID` with the id from the first step.
+4. Run `./run-integration-test.sh dev.env`
 
