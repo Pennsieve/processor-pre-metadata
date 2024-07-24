@@ -17,7 +17,6 @@ import (
 
 var logger = logging.PackageLogger("preprocessor")
 
-const schemaFileName = "graphSchema.json"
 const defaultRecordsBatchSize = 1000
 
 type MetadataPreProcessor struct {
@@ -53,7 +52,6 @@ func FromEnv() (*MetadataPreProcessor, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	inputDirectory, err := LookupRequiredEnvVar("INPUT_DIR")
 	if err != nil {
 		return nil, err
@@ -86,28 +84,20 @@ func (m *MetadataPreProcessor) Run() error {
 	datasetID := integration.DatasetNodeID
 	logger.Info("got integration", slog.String("datasetID", datasetID))
 
-	metadataDirectory := m.MetadataDirectory()
-	if err := os.MkdirAll(metadataDirectory, 0755); err != nil {
-		return fmt.Errorf("error creating directory %s: %w", metadataDirectory, err)
+	if err := m.MkDirectories(); err != nil {
+		return err
 	}
-	graphModels, err := m.WriteGraphSchema(metadataDirectory, datasetID)
+	metadataPath := m.MetadataPath()
+	graphModels, err := m.WriteGraphSchema(metadataPath, datasetID)
 	if err != nil {
 		return err
 	}
-	if err := m.WriteRecords(metadataDirectory, datasetID, graphModels); err != nil {
+	if err := m.WriteRecords(metadataPath, datasetID, graphModels); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *MetadataPreProcessor) MetadataDirectory() string {
-	return filepath.Join(m.InputDirectory, "metadata")
-}
-
-// propertiesFileName the name of the properties file for the given model relative to the metadata directory
-func propertiesFileName(modelID string) string {
-	return fmt.Sprintf("%s-properties.json", modelID)
-}
 func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datasetID string) ([]*schema.Model, error) {
 
 	res, err := m.Pennsieve.GetGraphSchema(datasetID)
@@ -115,7 +105,7 @@ func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datase
 		return nil, err
 	}
 
-	graphSchemaFilePath := filepath.Join(metadataDirectory, schemaFileName)
+	graphSchemaFilePath := filepath.Join(metadataDirectory, schemaFilePath)
 	var graphSchema []map[string]any
 	if err := WriteAndDecodeResponse(res, graphSchemaFilePath, &graphSchema); err != nil {
 		return nil, fmt.Errorf("error writing/decoding graph schema: %w", err)
@@ -149,7 +139,7 @@ func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datase
 		if propRes, err := m.Pennsieve.GetProperties(datasetID, model.ID); err != nil {
 			return nil, fmt.Errorf("error getting model %s properties: %w", model.ID, err)
 		} else {
-			modelPropFilePath := filepath.Join(metadataDirectory, propertiesFileName(model.ID))
+			modelPropFilePath := filepath.Join(metadataDirectory, propertiesFilePath(model.ID))
 			if err := WriteAndDecodeResponse(propRes, modelPropFilePath, &model.Properties); err != nil {
 				return nil, fmt.Errorf("error writing/decoding model %s properties to %s: %w", model.ID, modelPropFilePath, err)
 			} else {
@@ -161,11 +151,6 @@ func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datase
 	}
 
 	return graphModels, nil
-}
-
-// recordsFileName the name of the records file for the given model relative to the metadata directory
-func recordsFileName(modelID string) string {
-	return fmt.Sprintf("%s-records.json", modelID)
 }
 
 func (m *MetadataPreProcessor) WriteRecords(metadataDirectory string, datasetID string, graphModels []*schema.Model) error {

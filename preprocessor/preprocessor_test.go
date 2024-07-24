@@ -34,12 +34,12 @@ func TestRun(t *testing.T) {
 	metadataPP := NewMetadataPreProcessor(integrationID, inputDir, outputDir, sessionToken, mockServer.URL, mockServer.URL, defaultRecordsBatchSize)
 
 	require.NoError(t, metadataPP.Run())
-	expectedFiles.AssertEqual(t, metadataPP.MetadataDirectory())
+	expectedFiles.AssertEqual(t, metadataPP.MetadataPath())
 
 }
 
 type ExpectedFile struct {
-	// TestdataPath is the path relative to the testdata directory
+	// TestdataPath is the path relative to the testdata directory  (which should be the same as the path relative to the metadata directory in the input directory)
 	TestdataPath string
 	Bytes        []byte
 	Content      any
@@ -67,14 +67,14 @@ type ExpectedFiles struct {
 func NewExpectedFiles(datasetID string) *ExpectedFiles {
 	return &ExpectedFiles{
 		DatasetID: datasetID,
-		Files:     []ExpectedFile{{TestdataPath: schemaFileName, APIPath: fmt.Sprintf("/models/v1/datasets/%s/concepts/schema/graph", datasetID)}},
+		Files:     []ExpectedFile{{TestdataPath: schemaFilePath, APIPath: fmt.Sprintf("/models/v1/datasets/%s/concepts/schema/graph", datasetID)}},
 	}
 }
 
 func (e *ExpectedFiles) WithModels(modelIDs ...string) *ExpectedFiles {
 	for _, modelID := range modelIDs {
 		e.Files = append(e.Files, ExpectedFile{
-			TestdataPath: propertiesFileName(modelID),
+			TestdataPath: propertiesFilePath(modelID),
 			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/properties", e.DatasetID, modelID),
 		}, ExpectedFile{
 			TestdataPath: recordsFileName(modelID),
@@ -99,8 +99,7 @@ func (e *ExpectedFiles) Build(t *testing.T) *ExpectedFiles {
 
 func (e *ExpectedFiles) AssertEqual(t *testing.T, actualDir string) {
 	for _, expectedFile := range e.Files {
-		base := filepath.Base(expectedFile.TestdataPath)
-		actualFilePath := filepath.Join(actualDir, base)
+		actualFilePath := filepath.Join(actualDir, expectedFile.TestdataPath)
 		actualBytes, err := os.ReadFile(actualFilePath)
 		if assert.NoError(t, err) {
 			var actualContent any
