@@ -37,7 +37,7 @@ func (s *Session) GetAllRecords(datasetID string, modelID string, batchSize int)
 		} else {
 			records = append(records, batch...)
 			if len(batch) < batchSize {
-				// this endpoint does not tell use when it's returned the final page, so we have to call it until it returns empty
+				// this endpoint does not tell us when it's returned the final page, so we have to call it until it returns empty
 				// but also, if it has returned less than batchSize, then there should not be any more records.
 				break
 			} else {

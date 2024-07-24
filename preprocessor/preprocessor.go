@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pennsieve/processor-pre-metadata/logging"
-	"github.com/pennsieve/processor-pre-metadata/models"
+	"github.com/pennsieve/processor-pre-metadata/models/schema"
 	"github.com/pennsieve/processor-pre-metadata/pennsieve"
 	"github.com/pennsieve/processor-pre-metadata/util"
 	"io"
@@ -108,7 +108,7 @@ func (m *MetadataPreProcessor) MetadataDirectory() string {
 func propertiesFileName(modelID string) string {
 	return fmt.Sprintf("%s-properties.json", modelID)
 }
-func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datasetID string) ([]models.Model, error) {
+func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datasetID string) ([]*schema.Model, error) {
 
 	res, err := m.Pennsieve.GetGraphSchema(datasetID)
 	if err != nil {
@@ -123,25 +123,43 @@ func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datase
 		logger.Info("wrote graph schema",
 			slog.String("path", graphSchemaFilePath))
 	}
-	var graphModels []models.Model
-	for _, schemaElement := range graphSchema {
-		if model := models.ModelFromMap(schemaElement); model != nil {
-			graphModels = append(graphModels, *model)
-			modelLogger := model.Logger(logger)
-			if propRes, err := m.Pennsieve.GetProperties(datasetID, model.ID); err != nil {
-				return nil, fmt.Errorf("error getting model %s properties: %w", model.ID, err)
-			} else {
-				modelPropFilePath := filepath.Join(metadataDirectory, propertiesFileName(model.ID))
-				var props []map[string]any
-				if err := WriteAndDecodeResponse(propRes, modelPropFilePath, &props); err != nil {
-					return nil, fmt.Errorf("error writing/decoding model %s properties to %s: %w", model.ID, modelPropFilePath, err)
-				} else {
-					modelLogger.Info("wrote model properties",
-						slog.String("path", modelPropFilePath))
-				}
-			}
+	var graphModels []*schema.Model
+	schemaRelationshipsBySource := map[string][]schema.Relationship{}
+	linkedPropertiesBySource := map[string][]schema.LinkedProperty{}
+	for _, schemaElementAsMap := range graphSchema {
+		schemaElement, err := schema.FromMap(schemaElementAsMap)
+		if err != nil {
+			return nil, err
+		}
+		switch e := schemaElement.(type) {
+		case *schema.Model:
+			graphModels = append(graphModels, e)
+		case *schema.Relationship:
+			schemaRelationshipsBySource[e.From] = append(schemaRelationshipsBySource[e.From], *e)
+		case *schema.LinkedProperty:
+			linkedPropertiesBySource[e.From] = append(linkedPropertiesBySource[e.From], *e)
+		default:
+			return nil, fmt.Errorf("unknown schema element type: %T", e)
 		}
 	}
+	for _, model := range graphModels {
+		modelLogger := model.Logger(logger)
+		model.Relationships = schemaRelationshipsBySource[model.ID]
+		model.LinkedProperties = linkedPropertiesBySource[model.ID]
+		if propRes, err := m.Pennsieve.GetProperties(datasetID, model.ID); err != nil {
+			return nil, fmt.Errorf("error getting model %s properties: %w", model.ID, err)
+		} else {
+			modelPropFilePath := filepath.Join(metadataDirectory, propertiesFileName(model.ID))
+			if err := WriteAndDecodeResponse(propRes, modelPropFilePath, &model.Properties); err != nil {
+				return nil, fmt.Errorf("error writing/decoding model %s properties to %s: %w", model.ID, modelPropFilePath, err)
+			} else {
+				modelLogger.Info("wrote model properties",
+					slog.String("path", modelPropFilePath))
+			}
+		}
+
+	}
+
 	return graphModels, nil
 }
 
@@ -150,7 +168,7 @@ func recordsFileName(modelID string) string {
 	return fmt.Sprintf("%s-records.json", modelID)
 }
 
-func (m *MetadataPreProcessor) WriteRecords(metadataDirectory string, datasetID string, graphModels []models.Model) error {
+func (m *MetadataPreProcessor) WriteRecords(metadataDirectory string, datasetID string, graphModels []*schema.Model) error {
 	for _, model := range graphModels {
 		modelLogger := model.Logger(logger)
 		if recordRes, err := m.Pennsieve.GetAllRecords(datasetID, model.ID, m.RecordsBatchSize); err != nil {
