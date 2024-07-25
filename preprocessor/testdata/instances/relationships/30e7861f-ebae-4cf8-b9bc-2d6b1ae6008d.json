@@ -1,0 +1,16 @@
+[
+  {
+    "createdAt": "2024-06-13T20:17:33.857999+00:00",
+    "createdBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "displayName": "Has Been At",
+    "from": "5b07e038-9829-46c9-b698-bf4efef81341",
+    "id": "d2839796-4496-471d-b1e2-d6fe16582bff",
+    "name": "has_been_at_9de740e0-29c1-11ef-bd79-2da515dfdab1",
+    "schemaRelationshipId": "30e7861f-ebae-4cf8-b9bc-2d6b1ae6008d",
+    "to": "e79e8d65-b094-4f36-94f2-1553cd84b4a2",
+    "type": "has_been_at_9de740e0-29c1-11ef-bd79-2da515dfdab1",
+    "updatedAt": "2024-06-13T20:17:33.857999+00:00",
+    "updatedBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "values": []
+  }
+]

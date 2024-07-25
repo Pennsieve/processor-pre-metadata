@@ -27,6 +27,11 @@ func TestRun(t *testing.T) {
 		"7931cbe6-7494-4c0b-95f0-9f4b34edc73b",
 		"83964537-46d2-4fb5-9408-0b6262a42a56",
 		"bb04a8ce-03c9-4801-a0d9-e35cea53ac1b",
+	).WithSchemaRelationships(
+		"30e7861f-ebae-4cf8-b9bc-2d6b1ae6008d",
+		"2514a023-17fe-4743-af5f-094ed3dd339c",
+	).WithSchemaLinkedProperties(
+		"bbea65fd-b51f-464a-a5d3-dc228ff408c1",
 	).Build(t)
 	mockServer := newMockServer(t, integrationID, datasetId, expectedFiles)
 	defer mockServer.Close()
@@ -77,9 +82,29 @@ func (e *ExpectedFiles) WithModels(modelIDs ...string) *ExpectedFiles {
 			TestdataPath: propertiesFilePath(modelID),
 			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/properties", e.DatasetID, modelID),
 		}, ExpectedFile{
-			TestdataPath: recordsFileName(modelID),
+			TestdataPath: recordsFilePath(modelID),
 			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/instances", e.DatasetID, modelID),
 			QueryParams:  map[string][]string{"limit": {strconv.Itoa(defaultRecordsBatchSize)}, "offset": {strconv.Itoa(0)}},
+		})
+	}
+	return e
+}
+
+func (e *ExpectedFiles) WithSchemaRelationships(schemaRelationshipsIDs ...string) *ExpectedFiles {
+	for _, schemaRelationshipID := range schemaRelationshipsIDs {
+		e.Files = append(e.Files, ExpectedFile{
+			TestdataPath: relationshipInstancesFilePath(schemaRelationshipID),
+			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/relationships/%s/instances", e.DatasetID, schemaRelationshipID),
+		})
+	}
+	return e
+}
+
+func (e *ExpectedFiles) WithSchemaLinkedProperties(schemaLinkedPropertyIDs ...string) *ExpectedFiles {
+	for _, schemaLinkedPropertyID := range schemaLinkedPropertyIDs {
+		e.Files = append(e.Files, ExpectedFile{
+			TestdataPath: linkedPropertyInstancesFilePath(schemaLinkedPropertyID),
+			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/relationships/%s/instances", e.DatasetID, schemaLinkedPropertyID),
 		})
 	}
 	return e

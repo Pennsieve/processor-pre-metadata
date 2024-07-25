@@ -1,5 +1,7 @@
 package schema
 
+import "log/slog"
+
 const FromKey = "from"
 const ToKey = "to"
 const PositionKey = "position"
@@ -8,6 +10,12 @@ type Relationship struct {
 	Element
 	From string `json:"from"`
 	To   string `json:"to"`
+}
+
+func (m *Relationship) Logger(logger *slog.Logger) *slog.Logger {
+	return logger.With(slog.Group("relationship",
+		slog.String("id", m.ID),
+		slog.String("displayName", m.DisplayName)))
 }
 
 func RelationshipFromMap(jsonMap map[string]any) (*Relationship, error) {
@@ -28,6 +36,12 @@ type LinkedProperty struct {
 	From     string `json:"from"`
 	To       string `json:"to"`
 	Position int    `json:"position"`
+}
+
+func (m *LinkedProperty) Logger(logger *slog.Logger) *slog.Logger {
+	return logger.With(slog.Group("linkedProperties",
+		slog.String("id", m.ID),
+		slog.String("displayName", m.DisplayName)))
 }
 
 func LinkedPropertyFromMap(jsonMap map[string]any) (*LinkedProperty, error) {

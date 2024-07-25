@@ -6,9 +6,7 @@ import (
 
 type Model struct {
 	Element
-	Properties       []Property
-	LinkedProperties []LinkedProperty
-	Relationships    []Relationship
+	Properties []Property
 }
 
 func ModelFromMap(jsonMap map[string]any) (*Model, error) {

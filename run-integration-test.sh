@@ -2,7 +2,7 @@
 
 
 if [ "$#" -eq 0 ]; then
-  echo "must pass an env file. Copy dev.env.example to dev.env, fill in SESSION_TOKEN, and run $0 dev.env"
+  echo "must pass an env file. See Readme.md"
   exit 1
 fi
 

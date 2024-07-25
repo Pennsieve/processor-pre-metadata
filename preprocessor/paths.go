@@ -78,9 +78,19 @@ func propertiesFilePath(modelID string) string {
 	return filepath.Join(schemaDirectory, propertiesDirectory, fmt.Sprintf("%s.json", modelID))
 }
 
-// recordsFileName the name of the records file for the given model relative to the metadata directory
-func recordsFileName(modelID string) string {
+// recordsFilePath the path of the records file for the given model relative to the metadata directory
+func recordsFilePath(modelID string) string {
 	return filepath.Join(instancesDirectory, recordsDirectory, fmt.Sprintf("%s.json", modelID))
+}
+
+// relationshipInstancesFilePath the path of the instances file for the given schema relationship relative to the metadata directory
+func relationshipInstancesFilePath(schemaRelationshipID string) string {
+	return filepath.Join(instancesDirectory, relationshipsDirectory, fmt.Sprintf("%s.json", schemaRelationshipID))
+}
+
+// linkedPropertyInstancesFilePath the path of the instances file for the given schema linked property relative to the metadata directory
+func linkedPropertyInstancesFilePath(schemaLinkedPropertyID string) string {
+	return filepath.Join(instancesDirectory, linkedPropertiesDirectory, fmt.Sprintf("%s.json", schemaLinkedPropertyID))
 }
 
 func (m *MetadataPreProcessor) MkDirectories() error {
