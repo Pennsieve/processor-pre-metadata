@@ -1,6 +1,26 @@
 # Metadata Pre-Processor
 
-Retrieves a dataset's metadata and places it in the input directory.
+Retrieves a dataset's metadata and places it in the input directory with the structure below
+
+```
+layout relative to input directory:
+metadata/
+├── schema/
+│   ├── graphSchema.json
+│   └── properties/
+│       ├── <model-id-1>.json
+│       └── <model-id-2>.json
+└── instances/
+    ├── records/
+    │   ├── <model-id-1>.json
+    │   └── <model-id-2>.json
+    ├── relationships/
+    │   ├── <schemaRelationship-id-1>.json
+    │   ├── <schemaRelationship-id-2>.json
+    │   └── <schemaRelationship-id-3>.json
+    └── linkedProperties/
+        └── <schemaLinkedProperty-id-1>.json
+```
 
 To build:
 

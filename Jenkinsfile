@@ -9,6 +9,10 @@ ansiColor('xterm') {
   def serviceName = env.JOB_NAME.tokenize("/")[1]
 
   try {
+    stage("Build Container") {
+          sh "docker build ."
+    }
+
     stage("Run Tests") {
         sh "go test ./..."
     }
