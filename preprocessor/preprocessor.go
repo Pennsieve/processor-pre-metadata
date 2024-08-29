@@ -84,14 +84,16 @@ func (m *MetadataPreProcessor) WithDatasetID(datasetID string) *MetadataPreProce
 func (m *MetadataPreProcessor) Run() error {
 	if len(m.DatasetID) == 0 {
 		// get integration info
+		logger.Info("looking up integration", slog.String("integrationID", m.IntegrationID))
+
 		integration, err := m.Pennsieve.GetIntegration(m.IntegrationID)
 		if err != nil {
 			return err
 		}
 		datasetID := integration.DatasetNodeID
-		logger.Info("got integration", slog.String("datasetID", datasetID))
 		m.DatasetID = datasetID
 	}
+	logger.Info("getting metadata for dataset", slog.String("datasetID", m.DatasetID))
 	if err := m.MkDirectories(); err != nil {
 		return err
 	}
