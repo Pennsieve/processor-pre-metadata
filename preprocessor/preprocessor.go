@@ -21,6 +21,7 @@ const defaultRecordsBatchSize = 1000
 
 type MetadataPreProcessor struct {
 	IntegrationID    string
+	DatasetID        string
 	InputDirectory   string
 	OutputDirectory  string
 	Pennsieve        *pennsieve.Session
@@ -75,24 +76,33 @@ func FromEnv() (*MetadataPreProcessor, error) {
 	return NewMetadataPreProcessor(integrationID, inputDirectory, outputDirectory, sessionToken, apiHost, api2Host, 0), nil
 }
 
-func (m *MetadataPreProcessor) Run() error {
-	// get integration info
-	integration, err := m.Pennsieve.GetIntegration(m.IntegrationID)
-	if err != nil {
-		return err
-	}
-	datasetID := integration.DatasetNodeID
-	logger.Info("got integration", slog.String("datasetID", datasetID))
+func (m *MetadataPreProcessor) WithDatasetID(datasetID string) *MetadataPreProcessor {
+	m.DatasetID = datasetID
+	return m
+}
 
+func (m *MetadataPreProcessor) Run() error {
+	if len(m.DatasetID) == 0 {
+		// get integration info
+		logger.Info("looking up integration", slog.String("integrationID", m.IntegrationID))
+
+		integration, err := m.Pennsieve.GetIntegration(m.IntegrationID)
+		if err != nil {
+			return err
+		}
+		datasetID := integration.DatasetNodeID
+		m.DatasetID = datasetID
+	}
+	logger.Info("getting metadata for dataset", slog.String("datasetID", m.DatasetID))
 	if err := m.MkDirectories(); err != nil {
 		return err
 	}
 	metadataPath := m.MetadataPath()
-	schemaElements, err := m.WriteGraphSchema(metadataPath, datasetID)
+	schemaElements, err := m.WriteGraphSchema(metadataPath, m.DatasetID)
 	if err != nil {
 		return err
 	}
-	if err := m.WriteInstances(metadataPath, datasetID, schemaElements); err != nil {
+	if err := m.WriteInstances(metadataPath, m.DatasetID, schemaElements); err != nil {
 		return err
 	}
 	return nil
