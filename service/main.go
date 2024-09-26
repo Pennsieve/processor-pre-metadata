@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/pennsieve/processor-pre-metadata/logging"
-	"github.com/pennsieve/processor-pre-metadata/preprocessor"
+	"github.com/pennsieve/processor-pre-metadata/service/logging"
+	"github.com/pennsieve/processor-pre-metadata/service/preprocessor"
 	"log/slog"
 	"os"
 )

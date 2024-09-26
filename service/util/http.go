@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/pennsieve/processor-pre-metadata/logging"
+	"github.com/pennsieve/processor-pre-metadata/service/logging"
 	"net/http"
 )
 

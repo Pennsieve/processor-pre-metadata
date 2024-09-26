@@ -2,3 +2,5 @@
 /dev.env
 /processor-pre-metadata.iml
 /data/
+/go.work
+/go.work.sum

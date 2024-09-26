@@ -1,0 +1,16 @@
+[
+  {
+    "createdAt": "2024-06-13T20:23:43.179000+00:00",
+    "createdBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "displayName": "Address",
+    "from": "7681b4f8-7d10-4855-8c87-7fef3b408c0b",
+    "id": "b7bcfc2b-a406-44d7-aeb8-09f440802b3a",
+    "name": "address",
+    "schemaRelationshipId": "bbea65fd-b51f-464a-a5d3-dc228ff408c1",
+    "to": "e79e8d65-b094-4f36-94f2-1553cd84b4a2",
+    "type": "address",
+    "updatedAt": "2024-06-13T20:23:43.179000+00:00",
+    "updatedBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "values": []
+  }
+]

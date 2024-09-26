@@ -23,6 +23,14 @@ type Element struct {
 	DisplayName string `json:"displayName"`
 }
 
+func (e Element) isType(tipe string) bool {
+	return e.Type == tipe
+}
+
+func (e Element) IsModel() bool {
+	return e.isType(string(ModelType))
+}
+
 func ElementFromMap(jsonMap map[string]any) Element {
 	return Element{
 		ID:          jsonMap[IDKey].(string),

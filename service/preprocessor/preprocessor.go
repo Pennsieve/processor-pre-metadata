@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pennsieve/processor-pre-metadata/logging"
-	"github.com/pennsieve/processor-pre-metadata/models/schema"
-	"github.com/pennsieve/processor-pre-metadata/pennsieve"
-	"github.com/pennsieve/processor-pre-metadata/util"
+	"github.com/pennsieve/processor-pre-metadata/client/models/schema"
+	"github.com/pennsieve/processor-pre-metadata/client/paths"
+	"github.com/pennsieve/processor-pre-metadata/service/logging"
+	"github.com/pennsieve/processor-pre-metadata/service/pennsieve"
+	"github.com/pennsieve/processor-pre-metadata/service/util"
 	"io"
 	"log/slog"
 	"net/http"
@@ -115,7 +116,7 @@ func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datase
 		return schema.Elements{}, err
 	}
 
-	graphSchemaFilePath := filepath.Join(metadataDirectory, schemaFilePath)
+	graphSchemaFilePath := filepath.Join(metadataDirectory, paths.SchemaFilePath)
 	var graphSchema []map[string]any
 	if err := WriteAndDecodeResponse(res, graphSchemaFilePath, &graphSchema); err != nil {
 		return schema.Elements{}, fmt.Errorf("error writing/decoding graph schema: %w", err)
@@ -151,7 +152,7 @@ func (m *MetadataPreProcessor) WriteProperties(metadataDirectory string, dataset
 	if propRes, err := m.Pennsieve.GetProperties(datasetID, model.ID); err != nil {
 		return fmt.Errorf("error getting model %s properties: %w", model.ID, err)
 	} else {
-		modelPropFilePath := filepath.Join(metadataDirectory, propertiesFilePath(model.ID))
+		modelPropFilePath := filepath.Join(metadataDirectory, paths.PropertiesFilePath(model.ID))
 		if err := WriteAndDecodeResponse(propRes, modelPropFilePath, &model.Properties); err != nil {
 			return fmt.Errorf("error writing/decoding model %s properties to %s: %w", model.ID, modelPropFilePath, err)
 		} else {
@@ -168,7 +169,7 @@ func (m *MetadataPreProcessor) WriteInstances(metadataDirectory string, datasetI
 		if recordRes, err := m.Pennsieve.GetAllRecords(datasetID, model.ID, m.RecordsBatchSize); err != nil {
 			return err
 		} else {
-			recordsFilePath := filepath.Join(metadataDirectory, recordsFilePath(model.ID))
+			recordsFilePath := filepath.Join(metadataDirectory, paths.RecordsFilePath(model.ID))
 			if recordsSz, err := WriteJSON(recordsFilePath, recordRes); err != nil {
 				return fmt.Errorf("error writing/decoding model %s records to %s: %w", model.ID, recordsFilePath, err)
 			} else {
@@ -182,7 +183,7 @@ func (m *MetadataPreProcessor) WriteInstances(metadataDirectory string, datasetI
 		if relRes, err := m.Pennsieve.GetRelationshipInstances(datasetID, schemaRelationship.ID); err != nil {
 			return err
 		} else {
-			relationshipInstanceFilePath := filepath.Join(metadataDirectory, relationshipInstancesFilePath(schemaRelationship.ID))
+			relationshipInstanceFilePath := filepath.Join(metadataDirectory, paths.RelationshipInstancesFilePath(schemaRelationship.ID))
 			if relSz, err := WriteResponse(relRes, relationshipInstanceFilePath); err != nil {
 				return fmt.Errorf("error writing/decoding relationship %s instances to %s: %w", schemaRelationship.ID, relationshipInstanceFilePath, err)
 			} else {
@@ -200,7 +201,7 @@ func (m *MetadataPreProcessor) WriteInstances(metadataDirectory string, datasetI
 		if linkedPropRes, err := m.Pennsieve.GetRelationshipInstances(datasetID, schemaLinkedProperties.ID); err != nil {
 			return err
 		} else {
-			linkedPropertyInstanceFilePath := filepath.Join(metadataDirectory, linkedPropertyInstancesFilePath(schemaLinkedProperties.ID))
+			linkedPropertyInstanceFilePath := filepath.Join(metadataDirectory, paths.LinkedPropertyInstancesFilePath(schemaLinkedProperties.ID))
 			if relSz, err := WriteResponse(linkedPropRes, linkedPropertyInstanceFilePath); err != nil {
 				return fmt.Errorf("error writing/decoding linked property %s instances to %s: %w", schemaLinkedProperties.ID, linkedPropertyInstanceFilePath, err)
 			} else {

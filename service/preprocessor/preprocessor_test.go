@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/pennsieve/processor-pre-metadata/models"
+	"github.com/pennsieve/processor-pre-metadata/client/paths"
+	"github.com/pennsieve/processor-pre-metadata/service/pennsieve"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -72,17 +73,17 @@ type ExpectedFiles struct {
 func NewExpectedFiles(datasetID string) *ExpectedFiles {
 	return &ExpectedFiles{
 		DatasetID: datasetID,
-		Files:     []ExpectedFile{{TestdataPath: schemaFilePath, APIPath: fmt.Sprintf("/models/v1/datasets/%s/concepts/schema/graph", datasetID)}},
+		Files:     []ExpectedFile{{TestdataPath: paths.SchemaFilePath, APIPath: fmt.Sprintf("/models/v1/datasets/%s/concepts/schema/graph", datasetID)}},
 	}
 }
 
 func (e *ExpectedFiles) WithModels(modelIDs ...string) *ExpectedFiles {
 	for _, modelID := range modelIDs {
 		e.Files = append(e.Files, ExpectedFile{
-			TestdataPath: propertiesFilePath(modelID),
+			TestdataPath: paths.PropertiesFilePath(modelID),
 			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/properties", e.DatasetID, modelID),
 		}, ExpectedFile{
-			TestdataPath: recordsFilePath(modelID),
+			TestdataPath: paths.RecordsFilePath(modelID),
 			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/instances", e.DatasetID, modelID),
 			QueryParams:  map[string][]string{"limit": {strconv.Itoa(defaultRecordsBatchSize)}, "offset": {strconv.Itoa(0)}},
 		})
@@ -93,7 +94,7 @@ func (e *ExpectedFiles) WithModels(modelIDs ...string) *ExpectedFiles {
 func (e *ExpectedFiles) WithSchemaRelationships(schemaRelationshipsIDs ...string) *ExpectedFiles {
 	for _, schemaRelationshipID := range schemaRelationshipsIDs {
 		e.Files = append(e.Files, ExpectedFile{
-			TestdataPath: relationshipInstancesFilePath(schemaRelationshipID),
+			TestdataPath: paths.RelationshipInstancesFilePath(schemaRelationshipID),
 			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/relationships/%s/instances", e.DatasetID, schemaRelationshipID),
 		})
 	}
@@ -103,7 +104,7 @@ func (e *ExpectedFiles) WithSchemaRelationships(schemaRelationshipsIDs ...string
 func (e *ExpectedFiles) WithSchemaLinkedProperties(schemaLinkedPropertyIDs ...string) *ExpectedFiles {
 	for _, schemaLinkedPropertyID := range schemaLinkedPropertyIDs {
 		e.Files = append(e.Files, ExpectedFile{
-			TestdataPath: linkedPropertyInstancesFilePath(schemaLinkedPropertyID),
+			TestdataPath: paths.LinkedPropertyInstancesFilePath(schemaLinkedPropertyID),
 			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/relationships/%s/instances", e.DatasetID, schemaLinkedPropertyID),
 		})
 	}
@@ -138,7 +139,7 @@ func newMockServer(t *testing.T, integrationID string, datasetID string, expecte
 	mux := http.NewServeMux()
 	mux.HandleFunc(fmt.Sprintf("/integrations/%s", integrationID), func(writer http.ResponseWriter, request *http.Request) {
 		require.Equal(t, http.MethodGet, request.Method, "expected method %s for %s, got %s", http.MethodGet, request.URL, request.Method)
-		integration := models.Integration{
+		integration := pennsieve.Integration{
 			Uuid:          uuid.NewString(),
 			ApplicationID: 0,
 			DatasetNodeID: datasetID,

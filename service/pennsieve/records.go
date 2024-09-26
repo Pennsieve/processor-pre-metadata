@@ -3,7 +3,7 @@ package pennsieve
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pennsieve/processor-pre-metadata/util"
+	"github.com/pennsieve/processor-pre-metadata/service/util"
 	"net/http"
 )
 

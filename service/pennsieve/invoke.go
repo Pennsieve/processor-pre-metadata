@@ -2,7 +2,7 @@ package pennsieve
 
 import (
 	"fmt"
-	"github.com/pennsieve/processor-pre-metadata/logging"
+	"github.com/pennsieve/processor-pre-metadata/service/logging"
 	"io"
 	"net/http"
 )
