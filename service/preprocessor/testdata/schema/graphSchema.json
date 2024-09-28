@@ -15,7 +15,7 @@
     "updatedBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42"
   },
   {
-    "count": 2,
+    "count": 3,
     "createdAt": "2024-06-13T19:28:55.017000+00:00",
     "createdBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
     "description": "",
@@ -23,7 +23,7 @@
     "id": "bb04a8ce-03c9-4801-a0d9-e35cea53ac1b",
     "locked": false,
     "name": "object",
-    "propertyCount": 2,
+    "propertyCount": 7,
     "templateId": null,
     "type": "concept",
     "updatedAt": "2024-06-13T19:28:55.017000+00:00",

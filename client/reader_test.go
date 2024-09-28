@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/pennsieve/processor-pre-metadata/client/models/instance"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -21,5 +22,43 @@ func TestReader_GetRecordsForModel(t *testing.T) {
 
 	records, err := reader.GetRecordsForModel("Object")
 	require.NoError(t, err)
-	assert.Len(t, records, 2)
+	assert.Len(t, records, 3)
+
+	idToPropNameToProp := map[string]map[string]instance.Property{}
+	for _, r := range records {
+		propNameToProp := map[string]instance.Property{}
+		for _, p := range r.Values {
+			propNameToProp[p.Name] = p
+		}
+		idToPropNameToProp[r.ID] = propNameToProp
+		assert.Len(t, r.Values, 7)
+		assert.Equal(t, "object", r.Type)
+	}
+	assert.Len(t, idToPropNameToProp, 3)
+
+	propNameToProp := idToPropNameToProp["5b07e038-9829-46c9-b698-bf4efef81341"]
+	assert.Len(t, propNameToProp, 7)
+
+	// Name
+	name := propNameToProp["name"]
+
+	nameDataType, err := name.DecodeDataType()
+	require.NoError(t, err)
+	assert.Equal(t, instance.StringType, nameDataType)
+
+	nameValue, err := name.DecodeValue()
+	require.NoError(t, err)
+	assert.Equal(t, "stone", nameValue)
+
+	// ID
+	id := propNameToProp["id"]
+
+	idDataType, err := id.DecodeDataType()
+	require.NoError(t, err)
+	assert.Equal(t, instance.LongType, idDataType)
+
+	idValue, err := id.DecodeValue()
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), idValue)
+
 }
