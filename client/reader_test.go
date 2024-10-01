@@ -36,29 +36,135 @@ func TestReader_GetRecordsForModel(t *testing.T) {
 	}
 	assert.Len(t, idToPropNameToProp, 3)
 
-	propNameToProp := idToPropNameToProp["5b07e038-9829-46c9-b698-bf4efef81341"]
-	assert.Len(t, propNameToProp, 7)
+	// A record with some null property values
+	{
+		propNameToProp := idToPropNameToProp["5b07e038-9829-46c9-b698-bf4efef81341"]
+		assert.Len(t, propNameToProp, 7)
 
-	// Name
-	name := propNameToProp["name"]
+		// Name
+		name := propNameToProp["name"]
+		assertSimpleType(t, instance.StringType, "stone", name)
 
-	nameDataType, err := name.DecodeDataType()
-	require.NoError(t, err)
-	assert.Equal(t, instance.StringType, nameDataType)
+		// ID
+		id := propNameToProp["id"]
+		assertSimpleType(t, instance.LongType, int64(1), id)
 
-	nameValue, err := name.DecodeValue()
-	require.NoError(t, err)
-	assert.Equal(t, "stone", nameValue)
+		// Weights
+		weights := propNameToProp["weights"]
+		assertArrayType(t, instance.ArrayDataType{
+			Type:  instance.ArrayType,
+			Items: instance.ItemsType{Type: instance.LongType},
+		}, []int64(nil), weights)
 
-	// ID
-	id := propNameToProp["id"]
+		// Synonyms
+		synonyms := propNameToProp["synonyms"]
+		assertArrayType(t, instance.ArrayDataType{
+			Type:  instance.ArrayType,
+			Items: instance.ItemsType{Type: instance.StringType},
+		}, []string(nil), synonyms)
 
-	idDataType, err := id.DecodeDataType()
-	require.NoError(t, err)
-	assert.Equal(t, instance.LongType, idDataType)
+		// GPA
+		gpa := propNameToProp["gpa"]
+		assertSimpleType(t, instance.DoubleType, nil, gpa)
 
-	idValue, err := id.DecodeValue()
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), idValue)
+		// Birthday
+		birthday := propNameToProp["birthday"]
+		assertSimpleType(t, instance.DateType, nil, birthday)
 
+		// IsSolid
+		isSolid := propNameToProp["is_solid"]
+		assertSimpleType(t, instance.BooleanType, nil, isSolid)
+	}
+
+	// A record with no null property values
+	{
+		propNameToProp := idToPropNameToProp["a9b9d03b-19b3-4a43-b40e-5673ec955e49"]
+		assert.Len(t, propNameToProp, 7)
+
+		// Name
+		name := propNameToProp["name"]
+		assertSimpleType(t, instance.StringType, "whatsit", name)
+
+		// ID
+		id := propNameToProp["id"]
+		assertSimpleType(t, instance.LongType, int64(57), id)
+
+		// Weights
+		weights := propNameToProp["weights"]
+		assertArrayType(t, instance.ArrayDataType{
+			Type:  instance.ArrayType,
+			Items: instance.ItemsType{Type: instance.LongType},
+		}, []int64{3, 5, 7}, weights)
+
+		// Synonyms
+		synonyms := propNameToProp["synonyms"]
+		assertArrayType(t, instance.ArrayDataType{
+			Type:  instance.ArrayType,
+			Items: instance.ItemsType{Type: instance.StringType},
+		}, []string{"thingamabob", "whosit", "doo-dad"}, synonyms)
+
+		// GPA
+		gpa := propNameToProp["gpa"]
+		assertSimpleType(t, instance.DoubleType, 6.78, gpa)
+
+		// Birthday
+		birthday := propNameToProp["birthday"]
+		require.NoError(t, err)
+		assertSimpleType(t, instance.DateType, "2024-09-26T22:01:04", birthday)
+
+		// IsSolid
+		isSolid := propNameToProp["is_solid"]
+		assertSimpleType(t, instance.BooleanType, "true", isSolid)
+	}
+
+}
+
+func assertSimpleType(t *testing.T, expectedType instance.SimpleType, expectedValue any, actualProperty instance.Property) bool {
+	dataType, err := actualProperty.DecodeDataType()
+	if !assert.NoError(t, err) {
+		return false
+	}
+	if !assert.Equal(t, expectedType, dataType) {
+		return false
+	}
+
+	actualValue := actualProperty.Value
+	if expectedType == instance.LongType {
+		actualValue, err = actualProperty.LongValue()
+		if !assert.NoError(t, err) {
+			return false
+		}
+	}
+
+	if !assert.Equal(t, expectedValue, actualValue) {
+		return false
+	}
+	return true
+}
+
+func assertArrayType(t *testing.T, expectedType instance.ArrayDataType, expectedValue any, actualProperty instance.Property) bool {
+	dataType, err := actualProperty.DecodeDataType()
+	if !assert.NoError(t, err) {
+		return false
+	}
+	if !assert.IsType(t, instance.ArrayDataType{}, dataType) {
+		return false
+	}
+	actualDataType := dataType.(instance.ArrayDataType)
+	if !assert.Equal(t, expectedType.Type, actualDataType.Type) {
+		return false
+	}
+	if !assert.Equal(t, expectedType.Items.Type, actualDataType.Items.Type) {
+		return false
+	}
+
+	actualValue, err := actualProperty.ArrayValue()
+	if !assert.NoError(t, err) {
+		return false
+	}
+
+	if !assert.Equal(t, expectedValue, actualValue) {
+		return false
+	}
+	return true
 }
