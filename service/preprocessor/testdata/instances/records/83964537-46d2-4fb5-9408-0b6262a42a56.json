@@ -1,0 +1,22 @@
+[
+  {
+    "createdAt": "2024-06-13T20:16:20.216000+00:00",
+    "createdBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "id": "e79e8d65-b094-4f36-94f2-1553cd84b4a2",
+    "type": "location",
+    "updatedAt": "2024-06-13T20:16:20.216000+00:00",
+    "updatedBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "values": [
+      {
+        "conceptTitle": true,
+        "dataType": "String",
+        "default": false,
+        "displayName": "Coordinates",
+        "locked": false,
+        "name": "coordinates",
+        "required": true,
+        "value": "(x_1,y_1,z_1)"
+      }
+    ]
+  }
+]

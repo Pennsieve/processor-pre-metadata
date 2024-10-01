@@ -9,13 +9,20 @@ ansiColor('xterm') {
   def serviceName = env.JOB_NAME.tokenize("/")[1]
 
   try {
+
+   stage("Run Client Tests") {
+          sh "go test -C client -v ./..."
+   }
+
+   stage("Run Service Tests") {
+             sh "go test -C service -v ./..."
+   }
+
     stage("Build Container") {
           sh "docker build ."
     }
 
-    stage("Run Tests") {
-        sh "go test ./..."
-    }
+
 
   } catch (e) {
     slackSend(color: '#b20000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) by ${authorName}")

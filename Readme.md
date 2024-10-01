@@ -26,10 +26,6 @@ To build:
 
 `docker build -t pennsieve/metadata-pre-processor .`
 
-On arm64 architectures:
-
-`docker build -f Dockerfile_arm64 -t pennsieve/metadata-pre-processor .`
-
 To run tests:
 
 ` go test ./...`

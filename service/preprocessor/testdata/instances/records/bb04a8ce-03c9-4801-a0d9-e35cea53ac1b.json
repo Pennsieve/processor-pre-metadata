@@ -1,0 +1,286 @@
+[
+  {
+    "createdAt": "2024-06-13T19:32:43.986000+00:00",
+    "createdBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "id": "5b07e038-9829-46c9-b698-bf4efef81341",
+    "type": "object",
+    "updatedAt": "2024-06-13T19:32:43.986000+00:00",
+    "updatedBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "values": [
+      {
+        "conceptTitle": true,
+        "dataType": "Long",
+        "default": false,
+        "displayName": "ID",
+        "locked": false,
+        "name": "id",
+        "required": true,
+        "value": 1
+      },
+      {
+        "conceptTitle": false,
+        "dataType": {
+          "items": {
+            "type": "Long",
+            "unit": "kg"
+          },
+          "type": "array"
+        },
+        "default": false,
+        "displayName": "Weights",
+        "locked": false,
+        "name": "weights",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": {
+          "items": {
+            "format": null,
+            "type": "String"
+          },
+          "type": "array"
+        },
+        "default": false,
+        "displayName": "synonyms",
+        "locked": false,
+        "name": "synonyms",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "Double",
+        "default": false,
+        "displayName": "GPA",
+        "locked": false,
+        "name": "gpa",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "Date",
+        "default": false,
+        "displayName": "Birthday",
+        "locked": false,
+        "name": "birthday",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "Boolean",
+        "default": false,
+        "displayName": "isSolid",
+        "locked": false,
+        "name": "is_solid",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "String",
+        "default": false,
+        "displayName": "Name",
+        "locked": false,
+        "name": "name",
+        "required": false,
+        "value": "stone"
+      }
+    ]
+  },
+  {
+    "createdAt": "2024-06-13T19:33:03.998000+00:00",
+    "createdBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "id": "bcf06e0c-42dc-4ce9-9c70-9ee6865ebc7c",
+    "type": "object",
+    "updatedAt": "2024-06-13T19:33:03.998000+00:00",
+    "updatedBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "values": [
+      {
+        "conceptTitle": true,
+        "dataType": "Long",
+        "default": false,
+        "displayName": "ID",
+        "locked": false,
+        "name": "id",
+        "required": true,
+        "value": 2
+      },
+      {
+        "conceptTitle": false,
+        "dataType": {
+          "items": {
+            "type": "Long",
+            "unit": "kg"
+          },
+          "type": "array"
+        },
+        "default": false,
+        "displayName": "Weights",
+        "locked": false,
+        "name": "weights",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": {
+          "items": {
+            "format": null,
+            "type": "String"
+          },
+          "type": "array"
+        },
+        "default": false,
+        "displayName": "synonyms",
+        "locked": false,
+        "name": "synonyms",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "Double",
+        "default": false,
+        "displayName": "GPA",
+        "locked": false,
+        "name": "gpa",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "Date",
+        "default": false,
+        "displayName": "Birthday",
+        "locked": false,
+        "name": "birthday",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "Boolean",
+        "default": false,
+        "displayName": "isSolid",
+        "locked": false,
+        "name": "is_solid",
+        "required": false,
+        "value": null
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "String",
+        "default": false,
+        "displayName": "Name",
+        "locked": false,
+        "name": "name",
+        "required": false,
+        "value": "book"
+      }
+    ]
+  },
+  {
+    "createdAt": "2024-09-26T21:28:22.490000+00:00",
+    "createdBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "id": "a9b9d03b-19b3-4a43-b40e-5673ec955e49",
+    "type": "object",
+    "updatedAt": "2024-09-26T21:41:22.741000+00:00",
+    "updatedBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "values": [
+      {
+        "conceptTitle": false,
+        "dataType": "Date",
+        "default": false,
+        "displayName": "Birthday",
+        "locked": false,
+        "name": "birthday",
+        "required": false,
+        "value": "2024-09-26T22:01:04"
+      },
+      {
+        "conceptTitle": false,
+        "dataType": {
+          "items": {
+            "format": null,
+            "type": "String"
+          },
+          "type": "array"
+        },
+        "default": false,
+        "displayName": "synonyms",
+        "locked": false,
+        "name": "synonyms",
+        "required": false,
+        "value": [
+          "thingamabob",
+          "whosit",
+          "doo-dad"
+        ]
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "Double",
+        "default": false,
+        "displayName": "GPA",
+        "locked": false,
+        "name": "gpa",
+        "required": false,
+        "value": 6.78
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "Boolean",
+        "default": false,
+        "displayName": "isSolid",
+        "locked": false,
+        "name": "is_solid",
+        "required": false,
+        "value": "true"
+      },
+      {
+        "conceptTitle": true,
+        "dataType": "Long",
+        "default": false,
+        "displayName": "ID",
+        "locked": false,
+        "name": "id",
+        "required": true,
+        "value": 57
+      },
+      {
+        "conceptTitle": false,
+        "dataType": {
+          "items": {
+            "type": "Long",
+            "unit": "kg"
+          },
+          "type": "array"
+        },
+        "default": false,
+        "displayName": "Weights",
+        "locked": false,
+        "name": "weights",
+        "required": false,
+        "value": [
+          3,
+          5,
+          7
+        ]
+      },
+      {
+        "conceptTitle": false,
+        "dataType": "String",
+        "default": false,
+        "displayName": "Name",
+        "locked": false,
+        "name": "name",
+        "required": false,
+        "value": "whatsit"
+      }
+    ]
+  }
+]

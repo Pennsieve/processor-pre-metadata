@@ -1,0 +1,17 @@
+[
+  {
+    "conceptTitle": true,
+    "createdAt": "2024-06-13T20:13:47.368000+00:00",
+    "dataType": "String",
+    "default": false,
+    "defaultValue": null,
+    "description": "",
+    "displayName": "Coordinates",
+    "id": "236aabb6-c3b2-4fef-851b-86d9952855e2",
+    "index": 0,
+    "locked": false,
+    "name": "coordinates",
+    "required": true,
+    "updatedAt": "2024-06-13T20:13:47.368000+00:00"
+  }
+]

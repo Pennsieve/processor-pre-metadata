@@ -1,0 +1,16 @@
+[
+  {
+    "createdAt": "2024-06-13T19:52:58.692000+00:00",
+    "createdBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "displayName": "Beholds",
+    "from": "7681b4f8-7d10-4855-8c87-7fef3b408c0b",
+    "id": "cf2a668c-0e4c-46bc-b799-c29397b22feb",
+    "name": "beholds_6a012da0-29bb-11ef-a8a5-6d16b0d3d9a0",
+    "schemaRelationshipId": "2514a023-17fe-4743-af5f-094ed3dd339c",
+    "to": "5b07e038-9829-46c9-b698-bf4efef81341",
+    "type": "beholds_6a012da0-29bb-11ef-a8a5-6d16b0d3d9a0",
+    "updatedAt": "2024-06-13T19:52:58.692000+00:00",
+    "updatedBy": "N:user:a6f827dc-46e0-487c-9e19-ffe7dda54b42",
+    "values": []
+  }
+]

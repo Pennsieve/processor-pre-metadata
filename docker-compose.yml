@@ -11,5 +11,5 @@ services:
     container_name: metadata-pre-processor
     build:
       context: .
-      dockerfile: ./Dockerfile_arm64 # change to Dockerfile on Linux
+      dockerfile: ./Dockerfile
     entrypoint: /service/main
