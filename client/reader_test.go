@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/pennsieve/processor-pre-metadata/client/models/datatypes"
 	"github.com/pennsieve/processor-pre-metadata/client/models/instance"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,37 +44,37 @@ func TestReader_GetRecordsForModel(t *testing.T) {
 
 		// Name
 		name := propNameToProp["name"]
-		assertSimpleType(t, instance.StringType, "stone", name)
+		assertSimpleType(t, datatypes.StringType, "stone", name)
 
 		// ID
 		id := propNameToProp["id"]
-		assertSimpleType(t, instance.LongType, int64(1), id)
+		assertSimpleType(t, datatypes.LongType, int64(1), id)
 
 		// Weights
 		weights := propNameToProp["weights"]
-		assertArrayType(t, instance.ArrayDataType{
-			Type:  instance.ArrayType,
-			Items: instance.ItemsType{Type: instance.LongType},
+		assertArrayType(t, datatypes.ArrayDataType{
+			Type:  datatypes.ArrayType,
+			Items: datatypes.ItemsType{Type: datatypes.LongType},
 		}, []int64(nil), weights)
 
 		// Synonyms
 		synonyms := propNameToProp["synonyms"]
-		assertArrayType(t, instance.ArrayDataType{
-			Type:  instance.ArrayType,
-			Items: instance.ItemsType{Type: instance.StringType},
+		assertArrayType(t, datatypes.ArrayDataType{
+			Type:  datatypes.ArrayType,
+			Items: datatypes.ItemsType{Type: datatypes.StringType},
 		}, []string(nil), synonyms)
 
 		// GPA
 		gpa := propNameToProp["gpa"]
-		assertSimpleType(t, instance.DoubleType, nil, gpa)
+		assertSimpleType(t, datatypes.DoubleType, nil, gpa)
 
 		// Birthday
 		birthday := propNameToProp["birthday"]
-		assertSimpleType(t, instance.DateType, nil, birthday)
+		assertSimpleType(t, datatypes.DateType, nil, birthday)
 
 		// IsSolid
 		isSolid := propNameToProp["is_solid"]
-		assertSimpleType(t, instance.BooleanType, nil, isSolid)
+		assertSimpleType(t, datatypes.BooleanType, nil, isSolid)
 	}
 
 	// A record with no null property values
@@ -83,43 +84,43 @@ func TestReader_GetRecordsForModel(t *testing.T) {
 
 		// Name
 		name := propNameToProp["name"]
-		assertSimpleType(t, instance.StringType, "whatsit", name)
+		assertSimpleType(t, datatypes.StringType, "whatsit", name)
 
 		// ID
 		id := propNameToProp["id"]
-		assertSimpleType(t, instance.LongType, int64(57), id)
+		assertSimpleType(t, datatypes.LongType, int64(57), id)
 
 		// Weights
 		weights := propNameToProp["weights"]
-		assertArrayType(t, instance.ArrayDataType{
-			Type:  instance.ArrayType,
-			Items: instance.ItemsType{Type: instance.LongType},
+		assertArrayType(t, datatypes.ArrayDataType{
+			Type:  datatypes.ArrayType,
+			Items: datatypes.ItemsType{Type: datatypes.LongType},
 		}, []int64{3, 5, 7}, weights)
 
 		// Synonyms
 		synonyms := propNameToProp["synonyms"]
-		assertArrayType(t, instance.ArrayDataType{
-			Type:  instance.ArrayType,
-			Items: instance.ItemsType{Type: instance.StringType},
+		assertArrayType(t, datatypes.ArrayDataType{
+			Type:  datatypes.ArrayType,
+			Items: datatypes.ItemsType{Type: datatypes.StringType},
 		}, []string{"thingamabob", "whosit", "doo-dad"}, synonyms)
 
 		// GPA
 		gpa := propNameToProp["gpa"]
-		assertSimpleType(t, instance.DoubleType, 6.78, gpa)
+		assertSimpleType(t, datatypes.DoubleType, 6.78, gpa)
 
 		// Birthday
 		birthday := propNameToProp["birthday"]
 		require.NoError(t, err)
-		assertSimpleType(t, instance.DateType, "2024-09-26T22:01:04", birthday)
+		assertSimpleType(t, datatypes.DateType, "2024-09-26T22:01:04", birthday)
 
 		// IsSolid
 		isSolid := propNameToProp["is_solid"]
-		assertSimpleType(t, instance.BooleanType, "true", isSolid)
+		assertSimpleType(t, datatypes.BooleanType, "true", isSolid)
 	}
 
 }
 
-func assertSimpleType(t *testing.T, expectedType instance.SimpleType, expectedValue any, actualProperty instance.Property) bool {
+func assertSimpleType(t *testing.T, expectedType datatypes.SimpleType, expectedValue any, actualProperty instance.Property) bool {
 	dataType, err := actualProperty.DecodeDataType()
 	if !assert.NoError(t, err) {
 		return false
@@ -129,7 +130,7 @@ func assertSimpleType(t *testing.T, expectedType instance.SimpleType, expectedVa
 	}
 
 	actualValue := actualProperty.Value
-	if expectedType == instance.LongType {
+	if expectedType == datatypes.LongType {
 		actualValue, err = actualProperty.LongValue()
 		if !assert.NoError(t, err) {
 			return false
@@ -142,15 +143,15 @@ func assertSimpleType(t *testing.T, expectedType instance.SimpleType, expectedVa
 	return true
 }
 
-func assertArrayType(t *testing.T, expectedType instance.ArrayDataType, expectedValue any, actualProperty instance.Property) bool {
+func assertArrayType(t *testing.T, expectedType datatypes.ArrayDataType, expectedValue any, actualProperty instance.Property) bool {
 	dataType, err := actualProperty.DecodeDataType()
 	if !assert.NoError(t, err) {
 		return false
 	}
-	if !assert.IsType(t, instance.ArrayDataType{}, dataType) {
+	if !assert.IsType(t, datatypes.ArrayDataType{}, dataType) {
 		return false
 	}
-	actualDataType := dataType.(instance.ArrayDataType)
+	actualDataType := dataType.(datatypes.ArrayDataType)
 	if !assert.Equal(t, expectedType.Type, actualDataType.Type) {
 		return false
 	}
