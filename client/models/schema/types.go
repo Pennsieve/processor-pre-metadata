@@ -31,6 +31,10 @@ func (e Element) IsModel() bool {
 	return e.isType(string(ModelType))
 }
 
+func (e Element) IsLinkedProperty() bool {
+	return e.isType(string(LinkedPropertyType))
+}
+
 func ElementFromMap(jsonMap map[string]any) Element {
 	return Element{
 		ID:          jsonMap[IDKey].(string),
