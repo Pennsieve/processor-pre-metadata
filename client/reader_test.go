@@ -12,19 +12,25 @@ func TestNewReader(t *testing.T) {
 	reader, err := NewReader("testdata")
 	require.NoError(t, err)
 
-	assert.Len(t, reader.ModelNamesToSchemaElements, 3)
-	assert.Equal(t, "83964537-46d2-4fb5-9408-0b6262a42a56", reader.ModelNamesToSchemaElements["location"].ID)
-	assert.Equal(t, "bb04a8ce-03c9-4801-a0d9-e35cea53ac1b", reader.ModelNamesToSchemaElements["object"].ID)
-	assert.Equal(t, "7931cbe6-7494-4c0b-95f0-9f4b34edc73b", reader.ModelNamesToSchemaElements["subject"].ID)
+	assert.Equal(t, 3, reader.Schema.ModelCount())
 
-	assert.Len(t, reader.LinkedPropNamesToSchemaElements, 1)
+	for modelName, expectedModelID := range map[string]string{
+		"location": "83964537-46d2-4fb5-9408-0b6262a42a56",
+		"object":   "bb04a8ce-03c9-4801-a0d9-e35cea53ac1b",
+		"subject":  "7931cbe6-7494-4c0b-95f0-9f4b34edc73b",
+	} {
+		model, exists := reader.Schema.ModelByName(modelName)
+		assert.True(t, exists)
+		assert.Equal(t, expectedModelID, model.ID)
+	}
+	assert.Equal(t, 1, reader.Schema.LinkedPropertyCount())
 }
 
 func TestReader_GetRecordsForModel(t *testing.T) {
 	reader, err := NewReader("testdata")
 	require.NoError(t, err)
 
-	records, err := reader.GetRecordsForModel("Object")
+	records, err := reader.GetRecordsForModel("object")
 	require.NoError(t, err)
 	assert.Len(t, records, 3)
 
@@ -177,7 +183,7 @@ func TestReader_GetLinkInstancesForProperty(t *testing.T) {
 	reader, err := NewReader("testdata")
 	require.NoError(t, err)
 
-	links, err := reader.GetLinkInstancesForProperty("Address")
+	links, err := reader.GetLinkInstancesForProperty("address")
 	require.NoError(t, err)
 	assert.Len(t, links, 1)
 
@@ -187,9 +193,11 @@ func TestReader_GetLinkInstancesForProperty(t *testing.T) {
 
 	assert.Equal(t, "address", linkInstance.Type)
 
-	assert.Equal(t, "b7bcfc2b-a406-44d7-aeb8-09f440802b3a", linkInstance.Id)
-	assert.Equal(t, "bbea65fd-b51f-464a-a5d3-dc228ff408c1", linkInstance.SchemaRelationshipId)
-	assert.Equal(t, reader.LinkedPropNamesToSchemaElements["address"].ID, linkInstance.SchemaRelationshipId)
+	assert.Equal(t, "b7bcfc2b-a406-44d7-aeb8-09f440802b3a", linkInstance.ID)
+	assert.Equal(t, "bbea65fd-b51f-464a-a5d3-dc228ff408c1", linkInstance.SchemaRelationshipID)
+	linkElement, linkElementExists := reader.Schema.LinkedPropertyByName("address")
+	assert.True(t, linkElementExists)
+	assert.Equal(t, linkElement.ID, linkInstance.SchemaRelationshipID)
 
 	assert.Equal(t, "7681b4f8-7d10-4855-8c87-7fef3b408c0b", linkInstance.From)
 	assert.Equal(t, "e79e8d65-b094-4f36-94f2-1553cd84b4a2", linkInstance.To)

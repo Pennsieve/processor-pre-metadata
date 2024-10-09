@@ -8,23 +8,19 @@ import (
 	"github.com/pennsieve/processor-pre-metadata/client/paths"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // A Reader can be used to read the metadata records once they have been downloaded by the pre-processor
 type Reader struct {
-	MetadataDirectory               string
-	ModelNamesToSchemaElements      map[string]schema.Element
-	LinkedPropNamesToSchemaElements map[string]schema.Element
+	MetadataDirectory string
+	Schema            *Schema
 }
 
 // NewReader returns a pointer to a new Reader instance. The rootDirectory argument should be
 // the parent directory of the metadata directory.
 func NewReader(rootDirectory string) (*Reader, error) {
 	reader := Reader{
-		MetadataDirectory:               filepath.Join(rootDirectory, paths.MetadataDirectory),
-		ModelNamesToSchemaElements:      map[string]schema.Element{},
-		LinkedPropNamesToSchemaElements: map[string]schema.Element{},
+		MetadataDirectory: filepath.Join(rootDirectory, paths.MetadataDirectory),
 	}
 	schemaFilePath := filepath.Join(reader.MetadataDirectory, paths.SchemaFilePath)
 	schemaFile, err := os.Open(schemaFilePath)
@@ -37,17 +33,11 @@ func NewReader(rootDirectory string) (*Reader, error) {
 	if err := json.NewDecoder(schemaFile).Decode(&elements); err != nil {
 		return nil, fmt.Errorf("error decoding schema file %s: %w", schemaFilePath, err)
 	}
-	for _, e := range elements {
-		if e.IsModel() {
-			reader.ModelNamesToSchemaElements[e.Name] = e
-		} else if e.IsLinkedProperty() {
-			reader.LinkedPropNamesToSchemaElements[e.Name] = e
-		}
-	}
+	reader.Schema = NewSchema(elements)
 	return &reader, nil
 }
 func (r *Reader) GetRecordsForModel(modelName string) ([]instance.Record, error) {
-	modelElement, isModel := r.ModelNamesToSchemaElements[strings.ToLower(modelName)]
+	modelElement, isModel := r.Schema.ModelByName(modelName)
 	if !isModel {
 		return nil, fmt.Errorf("model %s not found", modelName)
 	}
@@ -66,7 +56,7 @@ func (r *Reader) GetRecordsForModel(modelName string) ([]instance.Record, error)
 }
 
 func (r *Reader) GetLinkInstancesForProperty(linkedPropertyName string) ([]instance.LinkedProperty, error) {
-	linkElement, isLink := r.LinkedPropNamesToSchemaElements[strings.ToLower(linkedPropertyName)]
+	linkElement, isLink := r.Schema.LinkedPropertyByName(linkedPropertyName)
 	if !isLink {
 		return nil, fmt.Errorf("linked property %s not found", linkedPropertyName)
 	}
