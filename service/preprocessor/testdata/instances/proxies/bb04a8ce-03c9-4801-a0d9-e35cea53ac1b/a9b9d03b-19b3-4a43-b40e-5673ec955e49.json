@@ -1,0 +1,23 @@
+[
+  [
+    {
+      "id": "6baa77da-9760-4deb-8a19-c97c3286a259"
+    },
+    {
+      "children": [],
+      "content": {
+        "createdAt": "2024-10-03T03:06:51.76978Z",
+        "datasetId": "N:dataset:e323328c-13c3-44f3-aaff-4fd5a941ded5",
+        "datasetNodeId": "N:dataset:e323328c-13c3-44f3-aaff-4fd5a941ded5",
+        "id": "N:collection:95bb7c19-0e8e-42b2-b53f-f5ce7a08e42a",
+        "name": "object",
+        "nodeId": "N:collection:95bb7c19-0e8e-42b2-b53f-f5ce7a08e42a",
+        "ownerId": 172,
+        "packageType": "Collection",
+        "state": "READY",
+        "updatedAt": "2024-10-03T03:06:51.76978Z"
+      },
+      "properties": []
+    }
+  ]
+]

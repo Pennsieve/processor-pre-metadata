@@ -33,7 +33,13 @@ func TestRun(t *testing.T) {
 		"2514a023-17fe-4743-af5f-094ed3dd339c",
 	).WithSchemaLinkedProperties(
 		"bbea65fd-b51f-464a-a5d3-dc228ff408c1",
-	).Build(t)
+	).WithProxies(map[string][]string{
+		"83964537-46d2-4fb5-9408-0b6262a42a56": {"e79e8d65-b094-4f36-94f2-1553cd84b4a2"},
+		"bb04a8ce-03c9-4801-a0d9-e35cea53ac1b": {"a9b9d03b-19b3-4a43-b40e-5673ec955e49", "bcf06e0c-42dc-4ce9-9c70-9ee6865ebc7c"}},
+	).WithNoProxies(map[string][]string{
+		"7931cbe6-7494-4c0b-95f0-9f4b34edc73b": {"7681b4f8-7d10-4855-8c87-7fef3b408c0b"},
+		"bb04a8ce-03c9-4801-a0d9-e35cea53ac1b": {"5b07e038-9829-46c9-b698-bf4efef81341"},
+	}).Build(t)
 	mockServer := newMockServer(t, integrationID, datasetId, expectedFiles)
 	defer mockServer.Close()
 
@@ -50,8 +56,9 @@ type ExpectedFile struct {
 	Bytes        []byte
 	Content      any
 	// APIPath is the request path the mock server will match against.
-	APIPath     string
-	QueryParams url.Values
+	APIPath             string
+	QueryParams         url.Values
+	ExpectFileNotExists bool
 }
 
 func (e ExpectedFile) HandlerFunc(t *testing.T) func(http.ResponseWriter, *http.Request) {
@@ -73,7 +80,10 @@ type ExpectedFiles struct {
 func NewExpectedFiles(datasetID string) *ExpectedFiles {
 	return &ExpectedFiles{
 		DatasetID: datasetID,
-		Files:     []ExpectedFile{{TestdataPath: paths.SchemaFilePath, APIPath: fmt.Sprintf("/models/v1/datasets/%s/concepts/schema/graph", datasetID)}},
+		Files: []ExpectedFile{
+			{TestdataPath: paths.SchemaFilePath, APIPath: fmt.Sprintf("/models/v1/datasets/%s/concepts/schema/graph", datasetID)},
+			{TestdataPath: paths.RelationshipSchemasFilePath, APIPath: fmt.Sprintf("/models/datasets/%s/relationships", datasetID)},
+		},
 	}
 }
 
@@ -111,14 +121,42 @@ func (e *ExpectedFiles) WithSchemaLinkedProperties(schemaLinkedPropertyIDs ...st
 	return e
 }
 
+func (e *ExpectedFiles) WithProxies(modelIDToRecordIDs map[string][]string) *ExpectedFiles {
+	for modelID, recordIDs := range modelIDToRecordIDs {
+		for _, recordID := range recordIDs {
+			e.Files = append(e.Files, ExpectedFile{
+				TestdataPath: paths.ProxyInstancesFilePath(modelID, recordID),
+				APIPath:      fmt.Sprintf("/models/datasets/%s/concepts/%s/instances/%s/files", e.DatasetID, modelID, recordID),
+			})
+		}
+	}
+	return e
+}
+
+func (e *ExpectedFiles) WithNoProxies(modelIDToRecordIDs map[string][]string) *ExpectedFiles {
+	for modelID, recordIDs := range modelIDToRecordIDs {
+		for _, recordID := range recordIDs {
+			e.Files = append(e.Files, ExpectedFile{
+				TestdataPath:        paths.ProxyInstancesFilePath(modelID, recordID),
+				APIPath:             fmt.Sprintf("/models/datasets/%s/concepts/%s/instances/%s/files", e.DatasetID, modelID, recordID),
+				Bytes:               json.RawMessage("[]"),
+				ExpectFileNotExists: true,
+			})
+		}
+	}
+	return e
+}
+
 func (e *ExpectedFiles) Build(t *testing.T) *ExpectedFiles {
 	for i := range e.Files {
 		expected := &e.Files[i]
-		file := filepath.Join("testdata", expected.TestdataPath)
-		bytes, err := os.ReadFile(file)
-		require.NoError(t, err)
-		expected.Bytes = bytes
-		require.NoError(t, json.Unmarshal(bytes, &expected.Content))
+		if !expected.ExpectFileNotExists {
+			file := filepath.Join("testdata", expected.TestdataPath)
+			bytes, err := os.ReadFile(file)
+			require.NoError(t, err)
+			expected.Bytes = bytes
+			require.NoError(t, json.Unmarshal(bytes, &expected.Content))
+		}
 	}
 	return e
 }
@@ -126,11 +164,17 @@ func (e *ExpectedFiles) Build(t *testing.T) *ExpectedFiles {
 func (e *ExpectedFiles) AssertEqual(t *testing.T, actualDir string) {
 	for _, expectedFile := range e.Files {
 		actualFilePath := filepath.Join(actualDir, expectedFile.TestdataPath)
-		actualBytes, err := os.ReadFile(actualFilePath)
-		if assert.NoError(t, err) {
-			var actualContent any
-			require.NoError(t, json.Unmarshal(actualBytes, &actualContent))
-			assert.Equal(t, expectedFile.Content, actualContent, "actual content %s does not match expected content %s", actualFilePath, expectedFile.TestdataPath)
+		if expectedFile.ExpectFileNotExists {
+			assert.NoFileExists(t, actualFilePath)
+		} else {
+			actualBytes, err := os.ReadFile(actualFilePath)
+			if assert.NoError(t, err) {
+				// Comparing content, not bytes, since checked in expected files may be JSON formatted, while response
+				// from mock server is not, making the []bytes unequal.
+				var actualContent any
+				require.NoError(t, json.Unmarshal(actualBytes, &actualContent))
+				assert.Equal(t, expectedFile.Content, actualContent, "actual content %s does not match expected content %s", actualFilePath, expectedFile.TestdataPath)
+			}
 		}
 	}
 }

@@ -110,12 +110,16 @@ func (m *MetadataPreProcessor) Run() error {
 }
 
 func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datasetID string) (schema.Elements, error) {
-
+	// These don't need to be returned in the schema elements. Most will also appear
+	// in the graph schema below and they will be returned from there. Only one that doesn't is the special package proxy
+	// relationship which does not need to be included.
+	if err := m.WriteRelationshipSchemas(metadataDirectory, datasetID); err != nil {
+		return schema.Elements{}, err
+	}
 	res, err := m.Pennsieve.GetGraphSchema(datasetID)
 	if err != nil {
 		return schema.Elements{}, err
 	}
-
 	graphSchemaFilePath := filepath.Join(metadataDirectory, paths.SchemaFilePath)
 	var graphSchema []map[string]any
 	if err := WriteAndDecodeResponse(res, graphSchemaFilePath, &graphSchema); err != nil {
@@ -124,6 +128,7 @@ func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datase
 		logger.Info("wrote graph schema",
 			slog.String("path", graphSchemaFilePath))
 	}
+
 	schemaElements := schema.Elements{}
 	for _, schemaElementAsMap := range graphSchema {
 		schemaElement, err := schema.FromMap(schemaElementAsMap)
@@ -147,6 +152,24 @@ func (m *MetadataPreProcessor) WriteGraphSchema(metadataDirectory string, datase
 	return schemaElements, nil
 }
 
+// WriteRelationshipSchemas is a hack to get the special `belongs_to` package proxy relationship schema which is not included in graphSchemaFilePath.
+// The other relationship schemas retrieved will be duplicates of the info in graphSchemaFilePath.
+func (m *MetadataPreProcessor) WriteRelationshipSchemas(metadataDirectory string, datasetID string) error {
+	res, err := m.Pennsieve.GetRelationshipSchemas(datasetID)
+	if err != nil {
+		return err
+	}
+	relationshipSchemaFilePath := filepath.Join(metadataDirectory, paths.RelationshipSchemasFilePath)
+	writtenCount, err := WriteResponse(res, relationshipSchemaFilePath)
+	if err != nil {
+		return fmt.Errorf("error writing/decoding relationship schemas: %w", err)
+	}
+	logger.Info("wrote relationship schemas",
+		slog.String("path", relationshipSchemaFilePath),
+		slog.Int64("size", writtenCount))
+	return nil
+}
+
 func (m *MetadataPreProcessor) WriteProperties(metadataDirectory string, datasetID string, model *schema.Model) error {
 	modelLogger := model.Logger(logger)
 	if propRes, err := m.Pennsieve.GetProperties(datasetID, model.ID); err != nil {
@@ -164,51 +187,92 @@ func (m *MetadataPreProcessor) WriteProperties(metadataDirectory string, dataset
 }
 
 func (m *MetadataPreProcessor) WriteInstances(metadataDirectory string, datasetID string, schemaElements schema.Elements) error {
+	// Write the records and any package proxies
 	for _, model := range schemaElements.Models {
 		modelLogger := model.Logger(logger)
-		if recordRes, err := m.Pennsieve.GetAllRecords(datasetID, model.ID, m.RecordsBatchSize); err != nil {
+		recordRes, err := m.Pennsieve.GetAllRecords(datasetID, model.ID, m.RecordsBatchSize)
+		if err != nil {
 			return err
-		} else {
-			recordsFilePath := filepath.Join(metadataDirectory, paths.RecordsFilePath(model.ID))
-			if recordsSz, err := WriteJSON(recordsFilePath, recordRes); err != nil {
-				return fmt.Errorf("error writing/decoding model %s records to %s: %w", model.ID, recordsFilePath, err)
-			} else {
-				modelLogger.Info("wrote model records", slog.String("path", recordsFilePath),
-					slog.Int64("size", recordsSz))
-			}
 		}
+		recordsFilePath := filepath.Join(metadataDirectory, paths.RecordsFilePath(model.ID))
+		recordsSz, err := WriteJSON(recordsFilePath, recordRes)
+		if err != nil {
+			return fmt.Errorf("error writing/decoding model %s records to %s: %w", model.ID, recordsFilePath, err)
+		}
+		modelLogger.Info("wrote model records", slog.String("path", recordsFilePath),
+			slog.Int64("size", recordsSz))
+		if err := m.WriteProxies(metadataDirectory, datasetID, model.ID, recordRes); err != nil {
+			return err
+		}
+
 	}
+
+	// Write the relationship instances
 	for _, schemaRelationship := range schemaElements.Relationships {
 		relLogger := schemaRelationship.Logger(logger)
-		if relRes, err := m.Pennsieve.GetRelationshipInstances(datasetID, schemaRelationship.ID); err != nil {
+		relRes, err := m.Pennsieve.GetRelationshipInstances(datasetID, schemaRelationship.ID)
+		if err != nil {
 			return err
+		}
+		relationshipInstanceFilePath := filepath.Join(metadataDirectory, paths.RelationshipInstancesFilePath(schemaRelationship.ID))
+		if relSz, err := WriteResponse(relRes, relationshipInstanceFilePath); err != nil {
+			return fmt.Errorf("error writing/decoding relationship %s instances to %s: %w", schemaRelationship.ID, relationshipInstanceFilePath, err)
 		} else {
-			relationshipInstanceFilePath := filepath.Join(metadataDirectory, paths.RelationshipInstancesFilePath(schemaRelationship.ID))
-			if relSz, err := WriteResponse(relRes, relationshipInstanceFilePath); err != nil {
-				return fmt.Errorf("error writing/decoding relationship %s instances to %s: %w", schemaRelationship.ID, relationshipInstanceFilePath, err)
-			} else {
-				relLogger.Info("wrote relationship instances",
-					slog.String("path", relationshipInstanceFilePath),
-					slog.Int64("size", relSz))
-			}
+			relLogger.Info("wrote relationship instances",
+				slog.String("path", relationshipInstanceFilePath),
+				slog.Int64("size", relSz))
 		}
 	}
+
+	// Write the linked property instances
 	for _, schemaLinkedProperties := range schemaElements.LinkedProperties {
 		linkedPropLogger := schemaLinkedProperties.Logger(logger)
 		// Using the RelationshipInstances here because linked props are modeled as relationships server side.
 		// There is a special linked prop instance endpoint, but it's done by record instead of by schema linked prop id, so
 		// its kind of awkward for the layout we've chosen here.
-		if linkedPropRes, err := m.Pennsieve.GetRelationshipInstances(datasetID, schemaLinkedProperties.ID); err != nil {
+		linkedPropRes, err := m.Pennsieve.GetRelationshipInstances(datasetID, schemaLinkedProperties.ID)
+		if err != nil {
 			return err
+		}
+		linkedPropertyInstanceFilePath := filepath.Join(metadataDirectory, paths.LinkedPropertyInstancesFilePath(schemaLinkedProperties.ID))
+		if relSz, err := WriteResponse(linkedPropRes, linkedPropertyInstanceFilePath); err != nil {
+			return fmt.Errorf("error writing/decoding linked property %s instances to %s: %w", schemaLinkedProperties.ID, linkedPropertyInstanceFilePath, err)
 		} else {
-			linkedPropertyInstanceFilePath := filepath.Join(metadataDirectory, paths.LinkedPropertyInstancesFilePath(schemaLinkedProperties.ID))
-			if relSz, err := WriteResponse(linkedPropRes, linkedPropertyInstanceFilePath); err != nil {
-				return fmt.Errorf("error writing/decoding linked property %s instances to %s: %w", schemaLinkedProperties.ID, linkedPropertyInstanceFilePath, err)
-			} else {
-				linkedPropLogger.Info("wrote linked property instances",
-					slog.String("path", linkedPropertyInstanceFilePath),
-					slog.Int64("size", relSz))
+			linkedPropLogger.Info("wrote linked property instances",
+				slog.String("path", linkedPropertyInstanceFilePath),
+				slog.Int64("size", relSz))
+		}
+	}
+	return nil
+}
+
+func (m *MetadataPreProcessor) WriteProxies(metadataDirectory, datasetID, modelID string, records []map[string]any) error {
+	for _, record := range records {
+		recordID, err := GetID(record)
+		if err != nil {
+			return err
+		}
+		recordLogger := logger.With(slog.String("recordID", recordID))
+		proxies, err := m.Pennsieve.GetProxyInstancesForRecord(datasetID, modelID, recordID)
+		if err != nil {
+			return err
+		}
+		if len(proxies) == 0 {
+			recordLogger.Info("no proxy instances for record")
+		} else {
+			proxyInstanceFilePath := filepath.Join(metadataDirectory, paths.ProxyInstancesFilePath(modelID, recordID))
+			directory := filepath.Dir(proxyInstanceFilePath)
+			if err := os.MkdirAll(directory, 0755); err != nil {
+				return fmt.Errorf("error creating proxy instance directory %s: %w", directory, err)
 			}
+			sz, err := WriteJSON(proxyInstanceFilePath, proxies)
+			if err != nil {
+				return fmt.Errorf("error writing/decoding proxy instances for %s to %s: %w", recordID, proxyInstanceFilePath, err)
+			}
+			recordLogger.Info("wrote proxy instances",
+				slog.String("path", proxyInstanceFilePath),
+				slog.Int64("count", sz),
+			)
 		}
 	}
 	return nil
@@ -272,4 +336,16 @@ func LookupRequiredEnvVar(key string) (string, error) {
 		return "", fmt.Errorf("no %s set", key)
 	}
 	return value, nil
+}
+
+func GetID(jsonMap map[string]any) (string, error) {
+	idAny, inResponse := jsonMap["id"]
+	if !inResponse {
+		return "", fmt.Errorf("id not found")
+	}
+	id, isString := idAny.(string)
+	if !isString {
+		return "", fmt.Errorf("id %s is not string: %T", id, id)
+	}
+	return id, nil
 }
