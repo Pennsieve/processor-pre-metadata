@@ -24,6 +24,9 @@ func TestNewReader(t *testing.T) {
 		assert.Equal(t, expectedModelID, model.ID)
 	}
 	assert.Equal(t, 1, reader.Schema.LinkedPropertyCount())
+
+	assert.NotNil(t, reader.Schema.Proxy())
+	assert.Equal(t, "e18a8519-8368-4062-977a-60707c9c93ec", reader.Schema.Proxy().ID)
 }
 
 func TestReader_GetRecordsForModel(t *testing.T) {

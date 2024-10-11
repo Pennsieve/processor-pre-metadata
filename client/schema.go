@@ -5,9 +5,10 @@ import "github.com/pennsieve/processor-pre-metadata/client/models/schema"
 type Schema struct {
 	modelNamesToSchemaElements      map[string]schema.Element
 	linkedPropNamesToSchemaElements map[string]schema.Element
+	proxy                           *schema.NullableRelationship
 }
 
-func NewSchema(schemaElements []schema.Element) *Schema {
+func NewSchema(schemaElements []schema.Element, proxy *schema.NullableRelationship) *Schema {
 	modelMap := make(map[string]schema.Element)
 	linkMap := make(map[string]schema.Element)
 	for _, e := range schemaElements {
@@ -20,6 +21,7 @@ func NewSchema(schemaElements []schema.Element) *Schema {
 	return &Schema{
 		modelNamesToSchemaElements:      modelMap,
 		linkedPropNamesToSchemaElements: linkMap,
+		proxy:                           proxy,
 	}
 }
 
@@ -39,4 +41,8 @@ func (s *Schema) LinkedPropertyCount() int {
 func (s *Schema) LinkedPropertyByName(linkName string) (linkedProperty schema.Element, linkedPropertyExists bool) {
 	linkedProperty, linkedPropertyExists = s.linkedPropNamesToSchemaElements[linkName]
 	return
+}
+
+func (s *Schema) Proxy() *schema.NullableRelationship {
+	return s.proxy
 }

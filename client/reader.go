@@ -8,6 +8,7 @@ import (
 	"github.com/pennsieve/processor-pre-metadata/client/paths"
 	"os"
 	"path/filepath"
+	"slices"
 )
 
 // A Reader can be used to read the metadata records once they have been downloaded by the pre-processor
@@ -22,18 +23,22 @@ func NewReader(rootDirectory string) (*Reader, error) {
 	reader := Reader{
 		MetadataDirectory: filepath.Join(rootDirectory, paths.MetadataDirectory),
 	}
+	var proxy *schema.NullableRelationship
+	relationshipsFilePath := filepath.Join(reader.MetadataDirectory, paths.RelationshipSchemasFilePath)
+	var relationships []schema.NullableRelationship
+	if err := readJsonFile(relationshipsFilePath, &relationships); err != nil {
+		return nil, err
+	}
+	proxyIndex := slices.IndexFunc(relationships, schema.IsProxy)
+	if proxyIndex != -1 {
+		proxy = &relationships[proxyIndex]
+	}
 	schemaFilePath := filepath.Join(reader.MetadataDirectory, paths.SchemaFilePath)
-	schemaFile, err := os.Open(schemaFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("error opening schema file %s: %w", schemaFilePath, err)
-	}
-	defer schemaFile.Close()
-
 	var elements []schema.Element
-	if err := json.NewDecoder(schemaFile).Decode(&elements); err != nil {
-		return nil, fmt.Errorf("error decoding schema file %s: %w", schemaFilePath, err)
+	if err := readJsonFile(schemaFilePath, &elements); err != nil {
+		return nil, err
 	}
-	reader.Schema = NewSchema(elements)
+	reader.Schema = NewSchema(elements, proxy)
 	return &reader, nil
 }
 func (r *Reader) GetRecordsForModel(modelName string) ([]instance.Record, error) {
@@ -53,6 +58,20 @@ func (r *Reader) GetRecordsForModel(modelName string) ([]instance.Record, error)
 		return nil, fmt.Errorf("error decoding records file %s for %s: %w", recordsFilePath, modelName, err)
 	}
 	return records, nil
+}
+
+func (r *Reader) GetProxiesForModel(modelName string) (map[string][]instance.Proxy, error) {
+	_, isModel := r.Schema.ModelByName(modelName)
+	if !isModel {
+		return nil, fmt.Errorf("model %s not found", modelName)
+	}
+	var proxiesByRecordID = make(map[string][]instance.Proxy)
+	if r.Schema.Proxy() == nil {
+		// If there is no Proxy schema, there should be no proxy instances
+		return proxiesByRecordID, nil
+	}
+	return proxiesByRecordID, nil
+
 }
 
 func (r *Reader) GetLinkInstancesForProperty(linkedPropertyName string) ([]instance.LinkedProperty, error) {
@@ -79,4 +98,17 @@ func (r *Reader) GetLinkInstancesForProperty(linkedPropertyName string) ([]insta
 	}
 	return links, nil
 
+}
+
+func readJsonFile(filePath string, value any) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("error opening file %s: %w", filePath, err)
+	}
+	defer file.Close()
+
+	if err := json.NewDecoder(file).Decode(value); err != nil {
+		return fmt.Errorf("error decoding file %s: %w", filePath, err)
+	}
+	return nil
 }
