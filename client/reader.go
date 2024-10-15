@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/pennsieve/processor-pre-metadata/client/models/instance"
 	"github.com/pennsieve/processor-pre-metadata/client/models/schema"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 )
 
 // A Reader can be used to read the metadata records once they have been downloaded by the pre-processor
@@ -60,8 +62,11 @@ func (r *Reader) GetRecordsForModel(modelName string) ([]instance.Record, error)
 	return records, nil
 }
 
+// GetProxiesForModel returns the proxy instances for the given model, grouped by the record IDs to which the proxies are linked.
+// That is, it returns a map from record ID to a slice of proxy instances for that record. Each proxy instance
+// represents one package that is linked to the record
 func (r *Reader) GetProxiesForModel(modelName string) (map[string][]instance.Proxy, error) {
-	_, isModel := r.Schema.ModelByName(modelName)
+	model, isModel := r.Schema.ModelByName(modelName)
 	if !isModel {
 		return nil, fmt.Errorf("model %s not found", modelName)
 	}
@@ -70,8 +75,66 @@ func (r *Reader) GetProxiesForModel(modelName string) (map[string][]instance.Pro
 		// If there is no Proxy schema, there should be no proxy instances
 		return proxiesByRecordID, nil
 	}
+	parentDirectoryPath := filepath.Join(r.MetadataDirectory, paths.ProxyInstancesForModelDirectory(model.ID))
+	dirEntries, err := os.ReadDir(parentDirectoryPath)
+	if err != nil {
+		// if the directory does not exist, this is not an error. Just means no proxy instances for this model
+		if errors.Is(err, os.ErrNotExist) {
+			return proxiesByRecordID, nil
+		} else {
+			return nil, fmt.Errorf("error reading proxy instance directory %s for model %s: %w", parentDirectoryPath, modelName, err)
+		}
+	}
+	for _, dirEntry := range dirEntries {
+		if recordID, isInstanceFile := getProxyRecordID(dirEntry); isInstanceFile {
+			instanceFilePath := filepath.Join(parentDirectoryPath, dirEntry.Name())
+			proxyInstances, err := readProxyInstanceFile(instanceFilePath)
+			if err != nil {
+				return nil, err
+			}
+			proxiesByRecordID[recordID] = proxyInstances
+		}
+	}
 	return proxiesByRecordID, nil
 
+}
+
+func getProxyRecordID(dirEntry os.DirEntry) (string, bool) {
+	extension := filepath.Ext(dirEntry.Name())
+	if dirEntry.Type().IsRegular() && extension == ".json" {
+		return strings.TrimSuffix(dirEntry.Name(), extension), true
+	}
+	return "", false
+}
+
+func readProxyInstanceFile(proxyInstanceFilePath string) ([]instance.Proxy, error) {
+	proxyInstanceFile, err := os.Open(proxyInstanceFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening proxy instance file %s: %w", proxyInstanceFilePath, err)
+	}
+	defer proxyInstanceFile.Close()
+
+	var rawInstances []instance.RawFromFile
+	if err := json.NewDecoder(proxyInstanceFile).Decode(&rawInstances); err != nil {
+		return nil, fmt.Errorf("error decoding proxy instances from file %s: %w", proxyInstanceFilePath, err)
+	}
+	var proxies []instance.Proxy
+	for _, raw := range rawInstances {
+		var proxyID instance.ProxyID
+		if err := json.Unmarshal(raw[0], &proxyID); err != nil {
+			return nil, fmt.Errorf("error decoding ProxyID %s from proxy instance file %s: %w", raw[0], proxyInstanceFilePath, err)
+		}
+		var proxyPackage instance.ProxyPackage
+		if err := json.Unmarshal(raw[1], &proxyPackage); err != nil {
+			return nil, fmt.Errorf("error decoding ProxyPackage %s from proxy instance file %s: %w", raw[1], proxyInstanceFilePath, err)
+		}
+		proxies = append(proxies, instance.Proxy{
+			ProxyID:      proxyID,
+			ProxyPackage: proxyPackage,
+		})
+	}
+
+	return proxies, nil
 }
 
 func (r *Reader) GetLinkInstancesForProperty(linkedPropertyName string) ([]instance.LinkedProperty, error) {

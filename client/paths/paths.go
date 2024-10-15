@@ -82,7 +82,12 @@ func LinkedPropertyInstancesFilePath(schemaLinkedPropertyID string) string {
 	return filepath.Join(InstancesDirectory, LinkedPropertiesDirectory, fmt.Sprintf("%s.json", schemaLinkedPropertyID))
 }
 
-// ProxyInstancesFilePath the path of the instances file for the given record relative to the metadata directory
+// ProxyInstancesFilePath the path of the instances file for the given model and record relative to the metadata directory
 func ProxyInstancesFilePath(modelID, recordID string) string {
-	return filepath.Join(InstancesDirectory, ProxiesDirectory, modelID, fmt.Sprintf("%s.json", recordID))
+	return filepath.Join(ProxyInstancesForModelDirectory(modelID), fmt.Sprintf("%s.json", recordID))
+}
+
+// ProxyInstancesForModelDirectory the path (relative to the metadata directory) of the directory which contains the proxy instances files for the given modelID
+func ProxyInstancesForModelDirectory(modelID string) string {
+	return filepath.Join(InstancesDirectory, ProxiesDirectory, modelID)
 }
