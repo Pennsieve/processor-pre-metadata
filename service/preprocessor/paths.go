@@ -32,12 +32,17 @@ func (m *MetadataPreProcessor) LinkedPropertiesPath() string {
 	return filepath.Join(m.MetadataPath(), paths.InstancesDirectory, paths.LinkedPropertiesDirectory)
 }
 
+// ProxiesPath gives the path to proxiesDirectory relative to the input directory
+func (m *MetadataPreProcessor) ProxiesPath() string {
+	return filepath.Join(m.MetadataPath(), paths.InstancesDirectory, paths.ProxiesDirectory)
+}
 func (m *MetadataPreProcessor) MkDirectories() error {
 	leafDirectories := []string{
 		m.PropertiesPath(),
 		m.RecordsPath(),
 		m.RelationshipsPath(),
 		m.LinkedPropertiesPath(),
+		m.ProxiesPath(),
 	}
 	for _, leaf := range leafDirectories {
 		if err := os.MkdirAll(leaf, 0755); err != nil {

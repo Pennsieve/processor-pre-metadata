@@ -1,0 +1,46 @@
+[
+  [
+    {
+      "id": "15bebbdc-e479-462f-b094-043a29cecfc9"
+    },
+    {
+      "children": [],
+      "content": {
+        "createdAt": "2024-06-13T19:34:52.724091Z",
+        "datasetId": "N:dataset:e323328c-13c3-44f3-aaff-4fd5a941ded5",
+        "datasetNodeId": "N:dataset:e323328c-13c3-44f3-aaff-4fd5a941ded5",
+        "id": "N:package:f90ff4bc-e3e5-4a53-b545-158ea770fbd8",
+        "name": "log.txt",
+        "nodeId": "N:package:f90ff4bc-e3e5-4a53-b545-158ea770fbd8",
+        "ownerId": 172,
+        "packageType": "Text",
+        "state": "READY",
+        "updatedAt": "2024-06-13T19:34:52.724091Z"
+      },
+      "properties": [
+        {
+          "category": "Pennsieve",
+          "properties": [
+            {
+              "dataType": "string",
+              "display": "Text",
+              "fixed": false,
+              "hidden": true,
+              "key": "subtype",
+              "value": "Text"
+            },
+            {
+              "dataType": "string",
+              "display": "Text",
+              "fixed": false,
+              "hidden": true,
+              "key": "icon",
+              "value": "Text"
+            }
+          ]
+        }
+      ],
+      "storage": 485
+    }
+  ]
+]

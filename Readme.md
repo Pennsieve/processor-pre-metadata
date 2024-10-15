@@ -7,10 +7,15 @@ layout relative to input directory:
 metadata/
 ├── schema/
 │   ├── graphSchema.json
+│   ├── relationships.json
 │   └── properties/
 │       ├── <model-id-1>.json
 │       └── <model-id-2>.json
 └── instances/
+    ├── proxies/
+    │   └── <model-id-1>/
+    │       ├── <record-id-1>.json
+    │       └── <record-id-2>.json
     ├── records/
     │   ├── <model-id-1>.json
     │   └── <model-id-2>.json

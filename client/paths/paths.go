@@ -9,10 +9,15 @@ import (
 // metadata/
 // ├── schema/
 // │   ├── graphSchema.json
+// │   ├── relationships.json
 // │   └── properties/
 // │       ├── <model-id-1>.json
 // │       └── <model-id-2>.json
 // └── instances/
+//     ├── proxies/
+//     │   └── <model-id-1>/
+//     │       ├── <record-id-1>.json
+//     │       └── <record-id-2>.json
 //     ├── records/
 //     │   ├── <model-id-1>.json
 //     │   └── <model-id-2>.json
@@ -44,6 +49,16 @@ const RelationshipsDirectory = "relationships"
 // LinkedPropertiesDirectory is the directory linked properties files will be placed in relative to the instances directory
 const LinkedPropertiesDirectory = "linkedProperties"
 
+// ProxiesDirectory is the directory proxy files will be placed in relative to the instances directory. It will contain
+// one file per record that has at least one package proxy
+const ProxiesDirectory = "proxies"
+
+// RelationshipSchemasFilePath is the path to the relations json file relative to the metadata directory.
+// Most of the info in this file will be in the SchemaFilePath file in another format. But this
+// will contain the special 'belongs_to' relation used by package proxies which is not included
+// in SchemaFilePath
+var RelationshipSchemasFilePath = filepath.Join(SchemaDirectory, "relationships.json")
+
 // SchemaFilePath is the path to the schema json file relative to the metadata directory
 var SchemaFilePath = filepath.Join(SchemaDirectory, "graphSchema.json")
 
@@ -65,4 +80,14 @@ func RelationshipInstancesFilePath(schemaRelationshipID string) string {
 // LinkedPropertyInstancesFilePath the path of the instances file for the given schema linked property relative to the metadata directory
 func LinkedPropertyInstancesFilePath(schemaLinkedPropertyID string) string {
 	return filepath.Join(InstancesDirectory, LinkedPropertiesDirectory, fmt.Sprintf("%s.json", schemaLinkedPropertyID))
+}
+
+// ProxyInstancesFilePath the path of the instances file for the given model and record relative to the metadata directory
+func ProxyInstancesFilePath(modelID, recordID string) string {
+	return filepath.Join(ProxyInstancesForModelDirectory(modelID), fmt.Sprintf("%s.json", recordID))
+}
+
+// ProxyInstancesForModelDirectory the path (relative to the metadata directory) of the directory which contains the proxy instances files for the given modelID
+func ProxyInstancesForModelDirectory(modelID string) string {
+	return filepath.Join(InstancesDirectory, ProxiesDirectory, modelID)
 }

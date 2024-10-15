@@ -24,6 +24,59 @@ func TestNewReader(t *testing.T) {
 		assert.Equal(t, expectedModelID, model.ID)
 	}
 	assert.Equal(t, 1, reader.Schema.LinkedPropertyCount())
+
+	assert.NotNil(t, reader.Schema.Proxy())
+	assert.Equal(t, "e18a8519-8368-4062-977a-60707c9c93ec", reader.Schema.Proxy().ID)
+}
+
+func TestReader_GetProxiesForModel(t *testing.T) {
+	reader, err := NewReader("testdata")
+	require.NoError(t, err)
+
+	// location proxy instances
+	{
+		instancesByRecordID, err := reader.GetProxiesForModel("location")
+		require.NoError(t, err)
+
+		assert.Len(t, instancesByRecordID, 1)
+
+		assert.Contains(t, instancesByRecordID, "e79e8d65-b094-4f36-94f2-1553cd84b4a2")
+		instances := instancesByRecordID["e79e8d65-b094-4f36-94f2-1553cd84b4a2"]
+		assert.Len(t, instances, 1)
+
+		assert.Equal(t, "a6752c89-83d9-4191-8806-d55956e3217c", instances[0].ID)
+		assert.Equal(t, "N:collection:e3c0abb8-7480-42af-9529-99cafe9ea235", instances[0].Content.NodeID)
+	}
+
+	//object proxy instances
+	{
+		instancesByRecordID, err := reader.GetProxiesForModel("object")
+		require.NoError(t, err)
+
+		assert.Len(t, instancesByRecordID, 2)
+
+		assert.Contains(t, instancesByRecordID, "a9b9d03b-19b3-4a43-b40e-5673ec955e49")
+		instances1 := instancesByRecordID["a9b9d03b-19b3-4a43-b40e-5673ec955e49"]
+		assert.Len(t, instances1, 1)
+
+		assert.Equal(t, "6baa77da-9760-4deb-8a19-c97c3286a259", instances1[0].ID)
+		assert.Equal(t, "N:collection:95bb7c19-0e8e-42b2-b53f-f5ce7a08e42a", instances1[0].Content.NodeID)
+
+		assert.Contains(t, instancesByRecordID, "bcf06e0c-42dc-4ce9-9c70-9ee6865ebc7c")
+		instances2 := instancesByRecordID["bcf06e0c-42dc-4ce9-9c70-9ee6865ebc7c"]
+		assert.Len(t, instances2, 1)
+
+		assert.Equal(t, "15bebbdc-e479-462f-b094-043a29cecfc9", instances2[0].ID)
+		assert.Equal(t, "N:package:f90ff4bc-e3e5-4a53-b545-158ea770fbd8", instances2[0].Content.NodeID)
+	}
+
+	//subject proxy instances
+	{
+		instancesByRecordID, err := reader.GetProxiesForModel("subject")
+		require.NoError(t, err)
+
+		assert.Empty(t, instancesByRecordID)
+	}
 }
 
 func TestReader_GetRecordsForModel(t *testing.T) {
