@@ -29,6 +29,15 @@ func (s *Schema) ModelCount() int {
 	return len(s.modelNamesToSchemaElements)
 }
 
+// ModelIDsByName returns a map model name -> model schema id
+func (s *Schema) ModelIDsByName() map[string]string {
+	nameToId := make(map[string]string, len(s.modelNamesToSchemaElements))
+	for name, element := range s.modelNamesToSchemaElements {
+		nameToId[name] = element.ID
+	}
+	return nameToId
+}
+
 func (s *Schema) ModelByName(modelName string) (model schema.Element, modelExists bool) {
 	model, modelExists = s.modelNamesToSchemaElements[modelName]
 	return
