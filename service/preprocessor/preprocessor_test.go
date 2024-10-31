@@ -81,7 +81,7 @@ func NewExpectedFiles(datasetID string) *ExpectedFiles {
 	return &ExpectedFiles{
 		DatasetID: datasetID,
 		Files: []ExpectedFile{
-			{TestdataPath: paths.SchemaFilePath, APIPath: fmt.Sprintf("/models/v1/datasets/%s/concepts/schema/graph", datasetID)},
+			{TestdataPath: paths.SchemaFilePath, APIPath: fmt.Sprintf("/models/datasets/%s/concepts/schema/graph", datasetID)},
 			{TestdataPath: paths.RelationshipSchemasFilePath, APIPath: fmt.Sprintf("/models/datasets/%s/relationships", datasetID)},
 		},
 	}
@@ -91,10 +91,10 @@ func (e *ExpectedFiles) WithModels(modelIDs ...string) *ExpectedFiles {
 	for _, modelID := range modelIDs {
 		e.Files = append(e.Files, ExpectedFile{
 			TestdataPath: paths.PropertiesFilePath(modelID),
-			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/properties", e.DatasetID, modelID),
+			APIPath:      fmt.Sprintf("/models/datasets/%s/concepts/%s/properties", e.DatasetID, modelID),
 		}, ExpectedFile{
 			TestdataPath: paths.RecordsFilePath(modelID),
-			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/concepts/%s/instances", e.DatasetID, modelID),
+			APIPath:      fmt.Sprintf("/models/datasets/%s/concepts/%s/instances", e.DatasetID, modelID),
 			QueryParams:  map[string][]string{"limit": {strconv.Itoa(defaultRecordsBatchSize)}, "offset": {strconv.Itoa(0)}},
 		})
 	}
@@ -105,7 +105,7 @@ func (e *ExpectedFiles) WithSchemaRelationships(schemaRelationshipsIDs ...string
 	for _, schemaRelationshipID := range schemaRelationshipsIDs {
 		e.Files = append(e.Files, ExpectedFile{
 			TestdataPath: paths.RelationshipInstancesFilePath(schemaRelationshipID),
-			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/relationships/%s/instances", e.DatasetID, schemaRelationshipID),
+			APIPath:      fmt.Sprintf("/models/datasets/%s/relationships/%s/instances", e.DatasetID, schemaRelationshipID),
 		})
 	}
 	return e
@@ -115,7 +115,7 @@ func (e *ExpectedFiles) WithSchemaLinkedProperties(schemaLinkedPropertyIDs ...st
 	for _, schemaLinkedPropertyID := range schemaLinkedPropertyIDs {
 		e.Files = append(e.Files, ExpectedFile{
 			TestdataPath: paths.LinkedPropertyInstancesFilePath(schemaLinkedPropertyID),
-			APIPath:      fmt.Sprintf("/models/v1/datasets/%s/relationships/%s/instances", e.DatasetID, schemaLinkedPropertyID),
+			APIPath:      fmt.Sprintf("/models/datasets/%s/relationships/%s/instances", e.DatasetID, schemaLinkedPropertyID),
 		})
 	}
 	return e
