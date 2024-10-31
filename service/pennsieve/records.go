@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Session) GetRecordsPage(datasetID string, modelID string, limit int, offset int) ([]map[string]any, error) {
-	url := fmt.Sprintf("%s/models/v1/datasets/%s/concepts/%s/instances?limit=%d&offset=%d", s.APIHost, datasetID, modelID, limit, offset)
+	url := fmt.Sprintf("%s/models/datasets/%s/concepts/%s/instances?limit=%d&offset=%d", s.APIHost, datasetID, modelID, limit, offset)
 	res, err := s.InvokePennsieve(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
