@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pennsieve/processor-pre-metadata/service/logging"
 	"io"
+	"log/slog"
 	"net/http"
 )
 
@@ -46,7 +47,10 @@ func (s *Session) InvokePennsieve(method string, url string, body io.Reader) (*h
 	if err := checkHTTPStatus(res); err != nil {
 		// if there was an error, checkHTTPStatus read the body
 		if closeError := res.Body.Close(); closeError != nil {
-			logger.Warn("error closing response body from %s %s: %w", method, url, closeError)
+			logger.Warn("error closing body from http status error",
+				slog.String("method", method),
+				slog.String("url", url),
+				slog.Any("error", closeError))
 		}
 		return nil, err
 	}
